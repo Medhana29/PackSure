@@ -1,0 +1,329 @@
+```text
+PACKSURE - API CONTRACT
+
+This file defines the data formats exchanged between the
+OCR/Extraction module, Compliance Engine, and Backend.
+
+All team members must follow these structures.
+
+If any structure needs to change, update this file first
+and inform the team.
+
+
+==================================================
+1. OCR / EXTRACTION OUTPUT
+==================================================
+
+Person 2 (OCR + Extraction) -> Person 3 (Compliance)
+
+Function:
+
+process_image(image_path)
+
+
+OUTPUT:
+
+{
+  "product_name": "ABC BISCUITS",
+  "manufacturer": "ABC Foods Pvt Ltd",
+  "net_quantity": "200 g",
+  "mrp": "₹50",
+  "manufacturing_date": "08/2026",
+  "consumer_care": null,
+  "raw_text": "ABC BISCUITS\nManufactured by ABC Foods Pvt Ltd..."
+}
+
+
+==================================================
+2. FIELD DEFINITIONS
+==================================================
+
+product_name
+- Type: string or null
+- Description: Product name detected from the package
+
+manufacturer
+- Type: string or null
+- Description: Manufacturer / Packer / Importer details
+
+net_quantity
+- Type: string or null
+- Description: Net quantity such as 200 g, 1 kg, 500 ml, etc.
+
+mrp
+- Type: string or null
+- Description: Maximum Retail Price
+
+manufacturing_date
+- Type: string or null
+- Description: Manufacturing / Packing date
+
+consumer_care
+- Type: string or null
+- Description: Consumer care / customer care contact details
+
+raw_text
+- Type: string
+- Description: Complete text obtained from OCR
+
+
+==================================================
+3. MISSING VALUES
+==================================================
+
+If a declaration cannot be detected, use:
+
+null
+
+Example:
+
+{
+  "consumer_care": null
+}
+
+DO NOT use:
+
+""
+"N/A"
+"Not Found"
+"Missing"
+
+
+==================================================
+4. COMPLIANCE ENGINE INPUT
+==================================================
+
+Person 2 (OCR + Extraction) -> Person 3 (Compliance)
+
+The compliance engine receives the extraction output.
+
+Example:
+
+{
+  "product_name": "ABC BISCUITS",
+  "manufacturer": "ABC Foods Pvt Ltd",
+  "net_quantity": "200 g",
+  "mrp": "₹50",
+  "manufacturing_date": "08/2026",
+  "consumer_care": null,
+  "raw_text": "ABC BISCUITS\nManufactured by ABC Foods Pvt Ltd..."
+}
+
+
+==================================================
+5. COMPLIANCE ENGINE OUTPUT
+==================================================
+
+Person 3 (Compliance) -> Person 4 (Backend)
+
+Function:
+
+check_compliance(declarations)
+
+
+OUTPUT:
+
+{
+  "overall_status": "POTENTIALLY_NON_COMPLIANT",
+  "risk_level": "MEDIUM",
+
+  "checks": [
+    {
+      "field": "product_name",
+      "status": "PASS",
+      "message": "Product name detected"
+    },
+    {
+      "field": "manufacturer",
+      "status": "PASS",
+      "message": "Manufacturer details detected"
+    },
+    {
+      "field": "net_quantity",
+      "status": "PASS",
+      "message": "Net quantity detected"
+    },
+    {
+      "field": "mrp",
+      "status": "PASS",
+      "message": "MRP detected"
+    },
+    {
+      "field": "manufacturing_date",
+      "status": "PASS",
+      "message": "Manufacturing date detected"
+    },
+    {
+      "field": "consumer_care",
+      "status": "FAIL",
+      "message": "Consumer care details not detected"
+    }
+  ],
+
+  "violations": [
+    {
+      "field": "consumer_care",
+      "severity": "MEDIUM",
+      "message": "Consumer care details not detected"
+    }
+  ]
+}
+
+
+==================================================
+6. OVERALL STATUS VALUES
+==================================================
+
+overall_status can be:
+
+POTENTIALLY_COMPLIANT
+POTENTIALLY_NON_COMPLIANT
+REVIEW_REQUIRED
+
+
+==================================================
+7. RISK LEVEL VALUES
+==================================================
+
+risk_level can be:
+
+LOW
+MEDIUM
+HIGH
+
+
+==================================================
+8. CHECK STATUS VALUES
+==================================================
+
+Each check can have:
+
+PASS
+FAIL
+WARNING
+
+
+Example:
+
+{
+  "field": "mrp",
+  "status": "PASS",
+  "message": "MRP detected"
+}
+
+
+==================================================
+9. VIOLATION FORMAT
+==================================================
+
+Every violation must follow this format:
+
+{
+  "field": "consumer_care",
+  "severity": "MEDIUM",
+  "message": "Consumer care details not detected"
+}
+
+
+severity can be:
+
+LOW
+MEDIUM
+HIGH
+
+
+==================================================
+10. REQUIRED FIELDS
+==================================================
+
+The compliance engine should check these six fields:
+
+1. product_name
+2. manufacturer
+3. net_quantity
+4. mrp
+5. manufacturing_date
+6. consumer_care
+
+
+==================================================
+11. MODULE FLOW
+==================================================
+
+IMAGE
+  |
+  v
+process_image(image_path)
+  |
+  v
+OCR + EXTRACTION
+  |
+  v
+Declarations JSON
+  |
+  v
+check_compliance(declarations)
+  |
+  v
+Compliance JSON
+
+
+==================================================
+12. IMPORTANT INTEGRATION RULE
+==================================================
+
+All team members must use the exact field names
+defined in this file.
+
+CORRECT:
+
+"net_quantity"
+
+NOT:
+
+"quantity"
+
+
+CORRECT:
+
+"consumer_care"
+
+NOT:
+
+"customer_support"
+
+
+If the JSON structure needs to be changed:
+
+1. Update this file first
+2. Inform the team
+3. Update the affected module
+4. Test the integration again
+
+
+==================================================
+13. MVP SCOPE
+==================================================
+
+The current MVP checks whether these declarations
+are detected:
+
+1. Product name
+2. Manufacturer / Packer / Importer
+3. Net quantity
+4. MRP
+5. Manufacturing / Packing date
+6. Consumer care details
+
+The system is a prototype compliance checker.
+
+Detection of a declaration does not by itself guarantee
+complete legal compliance.
+
+Advanced legal validation can be added in future versions.
+
+
+==================================================
+END OF API CONTRACT
+==================================================
+```
