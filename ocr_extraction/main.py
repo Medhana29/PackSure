@@ -5,6 +5,8 @@ from paddleocr import PaddleOCR
 from fastapi import FastAPI, UploadFile, File
 import os
 import shutil
+from compliance.engine import check_compliance
+from compliance.report_generator import generate_report 
 
 app = FastAPI()
 
@@ -388,10 +390,13 @@ def scan_product(
             ensure_ascii=False
         )
     )
+    check_compliance_result = check_compliance(declarations)
     return {
         "status": "success" if declarations else "failure",
-        "declarations": declarations
+        "declarations": declarations,
+        "compliance_check": check_compliance_result
     }
+
 
 
 @app.get("/")
