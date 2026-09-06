@@ -6,7 +6,6 @@ from fastapi import FastAPI, UploadFile, File
 import os
 import shutil
 from compliance.engine import check_compliance
-from compliance.report_generator import generate_report 
 
 app = FastAPI()
 
