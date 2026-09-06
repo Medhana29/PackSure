@@ -35,3 +35,32 @@ RISK_THRESHOLDS = {
     "MEDIUM": (3, 5),   # 3 to 5 points inclusive
     "HIGH": (6, float("inf"))  # 6+ points
 }
+
+# rules.py (add this at the bottom)
+
+FIELD_EXPLANATIONS = {
+    "product_name": {
+        "why_it_matters": "The product name helps consumers correctly identify what they are purchasing.",
+        "recommended_action": "Verify the product name is printed clearly on another visible panel."
+    },
+    "manufacturer": {
+        "why_it_matters": "Manufacturer details establish accountability and traceability for the product.",
+        "recommended_action": "Check other package surfaces for manufacturer name and address."
+    },
+    "net_quantity": {
+        "why_it_matters": "Net quantity ensures consumers know exactly how much product they are buying.",
+        "recommended_action": "Confirm the quantity declaration is present and clearly legible."
+    },
+    "mrp": {
+        "why_it_matters": "MRP protects consumers from being overcharged beyond the declared price.",
+        "recommended_action": "Verify the MRP is printed with correct currency symbol and formatting."
+    },
+    "manufacturing_date": {
+        "why_it_matters": "Manufacturing/packing date helps consumers assess product freshness and shelf life.",
+        "recommended_action": "Check for a manufacturing or packing date on other package panels."
+    },
+    "consumer_care": {
+        "why_it_matters": "Consumer care details provide a channel for complaints, queries, and support.",
+        "recommended_action": "Check other sides of the package. If genuinely absent, flag for review."
+    }
+}

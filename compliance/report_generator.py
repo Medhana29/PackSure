@@ -2,7 +2,7 @@
 # Generates a PDF compliance report from the compliance engine's output.
 # Input: compliance result dict (from engine.py) + basic product/scan metadata
 # Output: a saved PDF file
-
+from rules import FIELD_EXPLANATIONS
 from reportlab.lib.pagesizes import A4
 from reportlab.lib import colors
 from reportlab.lib.units import mm
@@ -128,6 +128,8 @@ def generate_report(
         elements.append(Paragraph("No violations detected.", styles['Normal']))
         elements.append(Spacer(1, 8*mm))
 
+    elements += _build_explanation_section(compliance_result["violations"], styles)
+    
     # ---------- Footer Note ----------
     footer_style = ParagraphStyle(
         'FooterStyle', parent=styles['Normal'], fontSize=8, textColor=colors.grey
@@ -142,3 +144,36 @@ def generate_report(
 
     doc.build(elements)
     return output_path
+def _build_explanation_section(violations, styles):
+    """
+    Builds a detailed explanation block for each violation,
+    including why it matters and recommended action.
+    """
+    elements = []
+    if not violations:
+        return elements
+
+    elements.append(Paragraph("Issue Details & Recommendations", styles['Heading3']))
+    elements.append(Spacer(1, 2*mm))
+
+    for v in violations:
+        field = v["field"]
+        explanation = FIELD_EXPLANATIONS.get(field, {})
+        why = explanation.get("why_it_matters", "This declaration is required under Legal Metrology Rules.")
+        action = explanation.get("recommended_action", "Verify the package for this information.")
+
+        issue_style = ParagraphStyle(
+            'IssueTitle', parent=styles['Normal'],
+            fontSize=11, textColor=colors.HexColor("#B03A2E"),
+            spaceBefore=6, spaceAfter=2, fontName='Helvetica-Bold'
+        )
+        body_style = ParagraphStyle(
+            'IssueBody', parent=styles['Normal'], fontSize=10, spaceAfter=2
+        )
+
+        elements.append(Paragraph(f"Issue: {field.replace('_', ' ').title()} Not Detected", issue_style))
+        elements.append(Paragraph(f"<b>Why It Matters:</b> {why}", body_style))
+        elements.append(Paragraph(f"<b>Recommended Action:</b> {action}", body_style))
+        elements.append(Spacer(1, 4*mm))
+
+    return elements
