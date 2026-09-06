@@ -9,6 +9,7 @@ import ImageQuality from "./pages/ImageQuality";
 import Scanning from "./pages/Scanning";
 import RequestReview from "./pages/RequestReview";
 
+// Person B's pages
 import Results from "./pages/Results";
 import Report from "./pages/Report";
 import History from "./pages/History";
@@ -23,7 +24,7 @@ function App() {
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
 
-        {/* Consumer Flow */}
+        {/* Person A - Consumer Flow */}
         <Route path="/dashboard" element={<Dashboard />} />
         <Route path="/search" element={<SearchProduct />} />
         <Route path="/inspection" element={<NewInspection />} />
@@ -31,7 +32,7 @@ function App() {
         <Route path="/scanning" element={<Scanning />} />
         <Route path="/review" element={<RequestReview />} />
 
-        {/* Results Flow */}
+        {/* Person B */}
         <Route path="/results" element={<Results />} />
         <Route path="/report" element={<Report />} />
         <Route path="/history" element={<History />} />
