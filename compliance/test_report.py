@@ -1,8 +1,8 @@
 # test_report.py
 # Quick test for report_generator.py using sample compliance data
 
-from engine import check_compliance
-from report_generator import generate_report
+from compliance.engine import check_compliance
+from compliance.report_generator import generate_report
 
 sample_input = {
     "product_name": "ABC BISCUITS",

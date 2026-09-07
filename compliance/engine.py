@@ -3,7 +3,6 @@
 # Input: declarations JSON from OCR/Extraction module (Person 2)
 # Output: compliance JSON as defined in API_Contract.txt
 from compliance.schemas import DeclarationInput, ComplianceResult
-
 from compliance.rules import REQUIRED_FIELDS, FIELD_SEVERITY, SEVERITY_POINTS, RISK_THRESHOLDS
 
 

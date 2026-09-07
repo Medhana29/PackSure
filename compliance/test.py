@@ -2,7 +2,7 @@
 # Quick manual test for the compliance engine using sample data
 # from API_Contract.txt — no need to wait for Person 2's OCR module.
 
-from engine import check_compliance
+from compliance.engine import check_compliance
 
 # Sample 1: One field missing (consumer_care)
 sample_input_1 = {
