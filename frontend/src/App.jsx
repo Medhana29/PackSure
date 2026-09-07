@@ -9,9 +9,12 @@ import ImageQuality from "./pages/ImageQuality";
 import Scanning from "./pages/Scanning";
 import RequestReview from "./pages/RequestReview";
 
+
 import Results from "./pages/Results";
 import Report from "./pages/Report";
 import History from "./pages/History";
+
+import ManufacturerDashboard from "./pages/manufacturer/ManufacturerDashboard";
 
 function App() {
   return (
@@ -35,7 +38,11 @@ function App() {
         <Route path="/results" element={<Results />} />
         <Route path="/report" element={<Report />} />
         <Route path="/history" element={<History />} />
-
+        {/* Manufacturer Flow */}
+        <Route
+            path="/manufacturer"
+            element={<ManufacturerDashboard />}
+        />
       </Routes>
     </BrowserRouter>
   );

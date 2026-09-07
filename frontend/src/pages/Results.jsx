@@ -1,6 +1,6 @@
 import { useNavigate } from "react-router-dom";
 import "../results.css";
-import inspectionData from "../tempData";
+import inspectionData from "../mockData";
 
 import StatusBadge from "../components/StatusBadge";
 import RiskBadge from "../components/RiskBadge";
