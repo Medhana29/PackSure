@@ -2,7 +2,7 @@
 # Generates a PDF compliance report from the compliance engine's output.
 # Input: compliance result dict (from engine.py) + basic product/scan metadata
 # Output: a saved PDF file
-from rules import FIELD_EXPLANATIONS
+from compliance.rules import FIELD_EXPLANATIONS
 from reportlab.lib.pagesizes import A4
 from reportlab.lib import colors
 from reportlab.lib.units import mm
@@ -129,7 +129,7 @@ def generate_report(
         elements.append(Spacer(1, 8*mm))
 
     elements += _build_explanation_section(compliance_result["violations"], styles)
-    
+
     # ---------- Footer Note ----------
     footer_style = ParagraphStyle(
         'FooterStyle', parent=styles['Normal'], fontSize=8, textColor=colors.grey
