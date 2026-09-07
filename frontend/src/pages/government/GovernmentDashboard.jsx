@@ -1,6 +1,6 @@
 import React from "react";
 import { useNavigate } from "react-router-dom";
-
+import "../../government.css";
 const GovernmentDashboard = () => {
   const navigate = useNavigate();
 
@@ -33,13 +33,18 @@ const GovernmentDashboard = () => {
   ];
 
   return (
-    <div className="container mt-4">
-      <h2 className="mb-4">Government Authority Dashboard</h2>
+    <div className="government-page">
+      <h1 className="government-title">
+  Government Authority Dashboard
+</h1>
 
+<p className="government-subtitle">
+  Review product compliance inspections and violations
+</p>
       {/* Statistics */}
-      <div className="row mb-4">
+      <div className="government-stats">
         {stats.map((stat, index) => (
-          <div className="col-md-3 mb-3" key={index}>
+          <div className="government-stat" key={index}>
             <div className="card shadow-sm h-100">
               <div className="card-body">
                 <h6 className="text-muted">{stat.title}</h6>

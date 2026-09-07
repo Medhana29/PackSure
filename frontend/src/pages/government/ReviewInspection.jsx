@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-
+import "../../reviewInspection.css";
 const ReviewInspection = () => {
   const { inspectionId } = useParams();
   const navigate = useNavigate();
@@ -12,65 +12,86 @@ const ReviewInspection = () => {
   };
 
   return (
-    <div className="container mt-4">
-      <h2 className="mb-4">Review Product</h2>
+  <div className="review-page">
 
-      <div className="card shadow-sm">
-        <div className="card-body">
+    <div className="review-header">
+      <h1>Review Product</h1>
+      <p>Government authority inspection</p>
+    </div>
 
-          <p>
-            <strong>Inspection ID:</strong> {inspectionId}
-          </p>
+    <div className="review-card">
 
-          <p>
-            <strong>Product:</strong> ABC Biscuits
-          </p>
+      <div className="review-details">
 
-          <p>
-            <strong>Risk:</strong> HIGH
-          </p>
+        <div className="detail-item">
+          <span>Inspection ID</span>
+          <strong>{inspectionId}</strong>
+        </div>
 
-          <p>
-            <strong>Status:</strong> {status}
-          </p>
+        <div className="detail-item">
+          <span>Product</span>
+          <strong>ABC Biscuits</strong>
+        </div>
 
-          <hr />
+        <div className="detail-item">
+          <span>Risk</span>
+          <strong className="risk-high">HIGH</strong>
+        </div>
 
-          <h5>Compliance Result</h5>
+        <div className="detail-item">
+          <span>Status</span>
+          <strong>{status}</strong>
+        </div>
 
-          <p className="mb-4">
-            POTENTIALLY NON-COMPLIANT
-          </p>
+      </div>
 
-          {status === "Pending" ? (
-            <div>
-              <button
-                className="btn btn-success me-2"
-                onClick={() => handleReview("ACCEPTED")}
-              >
-                ACCEPT
-              </button>
+      <div className="compliance-box">
+        <h3>Compliance Result</h3>
 
-              <button
-                className="btn btn-danger"
-                onClick={() => handleReview("REJECTED")}
-              >
-                REJECT
-              </button>
-            </div>
-          ) : (
-            <button
-              className="btn btn-secondary"
-              onClick={() => navigate("/government")}
-            >
-              Back to Dashboard
-            </button>
-          )}
+        <p>
+          POTENTIALLY NON-COMPLIANT
+        </p>
+      </div>
+
+      {status === "Pending" ? (
+        <div className="review-actions">
+
+          <button
+            className="accept-btn"
+            onClick={() => handleReview("ACCEPTED")}
+          >
+            ACCEPT
+          </button>
+
+          <button
+            className="reject-btn"
+            onClick={() => handleReview("REJECTED")}
+          >
+            REJECT
+          </button>
 
         </div>
-      </div>
+      ) : (
+        <div className="completed-review">
+
+          <p>
+            Review completed with status:
+            <strong> {status}</strong>
+          </p>
+
+          <button
+            className="back-btn"
+            onClick={() => navigate("/government")}
+          >
+            Back to Dashboard
+          </button>
+
+        </div>
+      )}
+
     </div>
-  );
+  </div>
+);
 };
 
 export default ReviewInspection;

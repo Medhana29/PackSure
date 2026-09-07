@@ -1,5 +1,6 @@
 import React from "react";
 import StatCard from "../../components/StatCard";
+import "../../manufacturer.css";
 
 const ManufacturerDashboard = () => {
   const stats = [
@@ -10,21 +11,48 @@ const ManufacturerDashboard = () => {
   ];
 
   return (
-    <div className="container mt-4">
-      <h2 className="mb-4">Manufacturer Dashboard</h2>
+  <div className="manufacturer-page">
 
-      <div className="row">
-        {stats.map((stat, index) => (
-          <div className="col-md-3 mb-4" key={index}>
-            <StatCard
-              title={stat.title}
-              value={stat.value}
-            />
-          </div>
-        ))}
+    <div className="dashboard-header">
+      <div>
+        <h1>Product Owner Dashboard</h1>
+        <p>Monitor your product compliance status</p>
       </div>
     </div>
-  );
+
+    <div className="manufacturer-stats">
+      {stats.map((stat, index) => (
+        <StatCard
+          key={index}
+          title={stat.title}
+          value={stat.value}
+        />
+      ))}
+    </div>
+
+    <div className="dashboard-section">
+      <h2>Compliance Overview</h2>
+
+      <div className="overview-card">
+        <div>
+          <h3>96</h3>
+          <p>Products are currently compliant</p>
+        </div>
+
+        <div>
+          <h3>24</h3>
+          <p>Products have issues</p>
+        </div>
+
+        <div>
+          <h3>8</h3>
+          <p>Products awaiting review</p>
+        </div>
+      </div>
+    </div>
+
+  </div>
+);
 };
 
 export default ManufacturerDashboard;

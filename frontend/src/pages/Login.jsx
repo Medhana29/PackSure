@@ -1,8 +1,11 @@
 import { useState } from "react";
-import { useNavigate, Link } from "react-router-dom";
+import { useNavigate, Link, useSearchParams } from "react-router-dom";
 
 function Login() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+
+  const role = searchParams.get("role") || "consumer";
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -13,15 +16,28 @@ function Login() {
     // Mock login for prototype
     if (email && password) {
       localStorage.setItem("isLoggedIn", "true");
-      navigate("/dashboard");
+      localStorage.setItem("userRole", role);
+
+      if (role === "product-owner") {
+        navigate("/manufacturer");
+      } else if (role === "government") {
+        navigate("/government");
+      } else {
+        navigate("/dashboard");
+      }
     } else {
       alert("Please enter email and password");
     }
   }
 
+  const roleNames = {
+    consumer: "Consumer",
+    "product-owner": "Product Owner",
+    government: "Government Authority",
+  };
+
   return (
     <div className="auth-page">
-
       <div className="auth-card">
 
         <h1>PackSure</h1>
@@ -31,6 +47,10 @@ function Login() {
         </p>
 
         <h2>Welcome Back</h2>
+
+        <p>
+          Login as <strong>{roleNames[role]}</strong>
+        </p>
 
         <form onSubmit={handleLogin}>
 
@@ -69,7 +89,6 @@ function Login() {
         </p>
 
       </div>
-
     </div>
   );
 }

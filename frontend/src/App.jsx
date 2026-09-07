@@ -17,14 +17,14 @@ import History from "./pages/History";
 import ManufacturerDashboard from "./pages/manufacturer/ManufacturerDashboard";
 import GovernmentDashboard from "./pages/government/GovernmentDashboard";
 import ReviewInspection from "./pages/government/ReviewInspection";
-
+import RoleSelection from "./pages/RoleSelection";
 function App() {
   return (
     <BrowserRouter>
       <Routes>
 
         {/* Authentication */}
-        <Route path="/" element={<Login />} />
+        <Route path="/" element={<RoleSelection />} />
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
 
