@@ -26,7 +26,7 @@ sample_input_2 = {
     "raw_text": "XYZ SOAP..."
 }
 
-# Sample 3: Multiple fields missing (should trigger REVIEW_REQUIRED)
+# Sample 3: Multiple fields missing
 sample_input_3 = {
     "product_name": "PQR JUICE",
     "manufacturer": None,
@@ -36,6 +36,17 @@ sample_input_3 = {
     "consumer_care": None,
     "raw_text": "PQR JUICE..."
 }
+
+# Sample 4: Very poor image quality (only 1 field detected)
+sample_input_4 = {
+    "product_name": "Kurkure",
+    "manufacturer": None,
+    "net_quantity": None,
+    "mrp": None,
+    "manufacturing_date": None,
+    "consumer_care": None
+}
+
 
 if __name__ == "__main__":
     print("=== Sample 1 (one field missing) ===")
@@ -48,3 +59,7 @@ if __name__ == "__main__":
 
     print("=== Sample 3 (multiple fields missing) ===")
     print(check_compliance(sample_input_3))
+    print()
+
+    print("=== Sample 4 (poor image quality, only 1 field detected) ===")
+    print(check_compliance(sample_input_4))
