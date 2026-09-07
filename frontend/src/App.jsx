@@ -15,6 +15,8 @@ import Report from "./pages/Report";
 import History from "./pages/History";
 
 import ManufacturerDashboard from "./pages/manufacturer/ManufacturerDashboard";
+import GovernmentDashboard from "./pages/government/GovernmentDashboard";
+import ReviewInspection from "./pages/government/ReviewInspection";
 
 function App() {
   return (
@@ -43,6 +45,16 @@ function App() {
             path="/manufacturer"
             element={<ManufacturerDashboard />}
         />
+        {/* Government Authority Flow */}
+          <Route
+             path="/government"
+             element={<GovernmentDashboard />}
+          />
+
+          <Route
+            path="/government/review/:inspectionId"
+            element={<ReviewInspection />}
+          />
       </Routes>
     </BrowserRouter>
   );
