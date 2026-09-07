@@ -2,6 +2,7 @@
 # Core compliance checking logic for PackSure.
 # Input: declarations JSON from OCR/Extraction module (Person 2)
 # Output: compliance JSON as defined in API_Contract.txt
+from compliance.schemas import DeclarationInput, ComplianceResult
 
 from compliance.rules import REQUIRED_FIELDS, FIELD_SEVERITY, SEVERITY_POINTS, RISK_THRESHOLDS
 
@@ -11,6 +12,9 @@ def check_compliance(declarations: dict) -> dict:
     Takes the extracted declarations dictionary and returns
     a structured compliance result following the API contract.
     """
+    validated_input = DeclarationInput(**declarations)
+    declarations = validated_input.dict()
+
     checks = []
     violations = []
 
