@@ -64,3 +64,7 @@ FIELD_EXPLANATIONS = {
         "recommended_action": "Check other sides of the package. If genuinely absent, flag for review."
     }
 }
+# Minimum number of fields that must be detected before we attempt
+# a compliance verdict. Below this, we treat it as an image quality
+# issue rather than genuine non-compliance.
+MIN_DETECTED_FIELDS_FOR_VERDICT = 2
