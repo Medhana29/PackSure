@@ -1,8 +1,9 @@
 function RecommendationCard({ recommendation }) {
   return (
     <div className="recommendation-card">
-      <span>✓</span>
-      <p>{recommendation}</p>
+      <h3>{recommendation.title}</h3>
+
+      <p>{recommendation.description}</p>
     </div>
   );
 }

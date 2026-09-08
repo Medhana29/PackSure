@@ -1,0 +1,42 @@
+.niyamnetra-logo {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.niyamnetra-logo img {
+  display: block;
+  width: 120px;
+  height: auto;
+  max-width: 100%;
+  object-fit: contain;
+}
+
+/* Navbar */
+.niyamnetra-logo.navbar-logo-size img {
+  width: 90px;
+}
+
+/* Dashboard */
+.niyamnetra-logo.dashboard-logo img {
+  width: 120px;
+}
+
+/* Login / Register / Role Selection */
+.niyamnetra-logo.large img {
+  width: 140px;
+}
+
+@media (max-width: 600px) {
+  .niyamnetra-logo.navbar-logo-size img {
+    width: 80px;
+  }
+
+  .niyamnetra-logo.dashboard-logo img {
+    width: 100px;
+  }
+
+  .niyamnetra-logo.large img {
+    width: 120px;
+  }
+}

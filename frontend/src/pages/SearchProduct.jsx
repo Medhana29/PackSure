@@ -1,37 +1,58 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Navbar from "../components/Navbar";
 import ProductCard from "../components/ProductCard";
 
 function SearchProduct() {
 
   const [search, setSearch] = useState("");
+  const [products, setProducts] = useState([]);
 
-  const products = [
-    {
-      id: 1,
-      name: "Tata Salt",
-      manufacturer: "Tata Consumer Products",
-      mrp: 30,
-      quantity: "1 kg"
-    },
-    {
-      id: 2,
-      name: "Aashirvaad Atta",
-      manufacturer: "ITC Limited",
-      mrp: 280,
-      quantity: "5 kg"
-    },
-    {
-      id: 3,
-      name: "Parle-G",
-      manufacturer: "Parle Products",
-      mrp: 10,
-      quantity: "100 g"
-    }
-  ];
+  useEffect(() => {
+    const savedHistory =
+      JSON.parse(localStorage.getItem("scanHistory")) || [];
+
+    const scannedProducts = savedHistory.map((item) => ({
+      id: item.inspectionId,
+
+      name:
+        item.declarations?.product_name ||
+        item.productName ||
+        "Unknown Product",
+
+      manufacturer:
+        item.declarations?.manufacturer ||
+        "Not detected",
+
+      mrp:
+        item.declarations?.mrp ||
+        "Not detected",
+
+      quantity:
+        item.declarations?.net_quantity ||
+        "Not detected",
+
+      status:
+        item.compliance_check?.overall_status ||
+        item.status ||
+        "UNKNOWN",
+
+      risk:
+        item.compliance_check?.risk_level ||
+        item.risk ||
+        "UNKNOWN",
+
+      inspectionId: item.inspectionId,
+
+      originalData: item
+    }));
+
+    setProducts(scannedProducts);
+  }, []);
 
   const filteredProducts = products.filter((product) =>
-    product.name.toLowerCase().includes(search.toLowerCase())
+    product.name
+      .toLowerCase()
+      .includes(search.toLowerCase())
   );
 
   return (
@@ -76,11 +97,19 @@ function SearchProduct() {
           ) : (
 
             <div className="empty-state">
-              <h3>No products found</h3>
+
+              <h3>
+                {products.length === 0
+                  ? "No scanned products"
+                  : "No products found"}
+              </h3>
 
               <p>
-                Try searching with another product name.
+                {products.length === 0
+                  ? "Scan a product to see it here."
+                  : "Try searching with another product name."}
               </p>
+
             </div>
 
           )}

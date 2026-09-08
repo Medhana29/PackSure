@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
+import Logo from "../components/Logo";
 
 function Register() {
   const navigate = useNavigate();
@@ -8,7 +9,9 @@ function Register() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
 
-  function handleRegister(e) {
+  const [loading, setLoading] = useState(false);
+
+  async function handleRegister(e) {
     e.preventDefault();
 
     if (!name || !email || !password) {
@@ -16,9 +19,41 @@ function Register() {
       return;
     }
 
-    alert("Registration successful!");
+    try {
+      setLoading(true);
 
-    navigate("/login");
+      const response = await fetch(
+        "http://127.0.0.1:8001/api/auth/register",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            name: name,
+            email: email,
+            password: password,
+          }),
+        }
+      );
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        alert(data.detail || "Registration failed");
+        return;
+      }
+
+      alert("Registration successful!");
+
+      navigate("/login");
+
+    } catch (error) {
+      console.error("Registration error:", error);
+      alert("Cannot connect to server. Please try again.");
+    } finally {
+      setLoading(false);
+    }
   }
 
   return (
@@ -26,7 +61,11 @@ function Register() {
 
       <div className="auth-card">
 
-        <h1>PackSure</h1>
+        <Logo size="large" />
+
+        <h1>
+          Create your NiyamNetra Account
+        </h1>
 
         <p className="auth-subtitle">
           Create your account
@@ -64,8 +103,9 @@ function Register() {
           <button
             type="submit"
             className="primary-btn full-width"
+            disabled={loading}
           >
-            Register
+            {loading ? "Registering..." : "Register"}
           </button>
 
         </form>

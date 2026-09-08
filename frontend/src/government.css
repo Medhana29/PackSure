@@ -1,68 +1,277 @@
+.dashboard-navbar {
+  height: 70px;
+  background: #D8E8E5;
+  border-bottom: 2px solid #227C70;
+
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  padding: 0 7%;
+  box-sizing: border-box;
+
+  box-shadow: 0 2px 10px rgba(18, 52, 59, 0.08);
+}
+
+.dashboard-navbar-logo {
+  display: flex;
+  align-items: center;
+}
+
+.dashboard-navbar-title {
+  color: #12343B;
+  font-size: 15px;
+  font-weight: 600;
+}
+/* ============================= */
+/* GOVERNMENT DASHBOARD */
+/* ============================= */
+
 .government-page {
   min-height: 100vh;
-  background: #f5f7fb;
-  padding: 40px;
+  background: #F7F8F4;
 }
 
-.government-title {
-  font-size: 32px;
-  margin-bottom: 8px;
-}
-
-.government-subtitle {
-  color: #666;
-  margin-bottom: 30px;
-}
+/* ============================= */
+/* STATISTICS */
+/* ============================= */
 
 .government-stats {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
-  gap: 20px;
+  gap: 22px;
   margin-bottom: 35px;
 }
 
+
 .government-stat .card {
-  border: none;
+  background: #FFFFFF;
+
+  border: 1px solid #D9E1DE;
   border-radius: 14px;
-  background: white;
-  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.06);
-  transition: transform 0.2s ease;
+
+  min-height: 130px;
+
+  box-shadow: 0 4px 15px rgba(18, 52, 59, 0.05);
+
+  transition: all 0.2s ease;
 }
+
 
 .government-stat .card:hover {
-  transform: translateY(-4px);
+  transform: translateY(-5px);
+
+  box-shadow:
+    0 10px 25px rgba(18, 52, 59, 0.10);
 }
 
-.government-page .card {
-  border: none;
+
+/* Card content */
+
+.government-stat .card-body {
+  padding: 24px;
+}
+
+
+.government-stat h6 {
+  color: #64748B;
+  font-size: 14px;
+  margin-bottom: 10px;
+}
+
+
+.government-stat h2 {
+  color: #12343B;
+  font-size: 30px;
+  margin: 0;
+}
+
+
+/* Colored card tops */
+
+.government-stat.review .card {
+  border-top: 4px solid #E67E22;
+}
+
+.government-stat.danger .card {
+  border-top: 4px solid #C62828;
+}
+
+.government-stat.success .card {
+  border-top: 4px solid #2E7D32;
+}
+
+
+/* ============================= */
+/* PENDING REVIEW CARD */
+/* ============================= */
+
+.government-review-card {
+  background: #FFFFFF;
+
+  border: 1px solid #D9E1DE;
   border-radius: 14px;
+
+  box-shadow:
+    0 4px 15px rgba(18, 52, 59, 0.05);
 }
 
-.government-page table {
-  margin-bottom: 0;
+
+.government-review-card .card-body {
+  padding: 25px;
 }
 
-.government-page th {
-  background: #f8f9fa;
+
+.government-review-card h4 {
+  color: #1F2933;
+  margin-bottom: 20px;
 }
 
-.government-page .btn-primary {
-  border-radius: 7px;
-  padding: 6px 16px;
+
+/* ============================= */
+/* TABLE */
+/* ============================= */
+
+.government-table {
+  width: 100%;
+  border-collapse: collapse;
 }
+
+
+.government-table th {
+  background: #F7F8F4;
+
+  color: #64748B;
+
+  font-size: 13px;
+  font-weight: 700;
+
+  text-align: left;
+
+  padding: 14px;
+
+  border-bottom: 1px solid #D9E1DE;
+}
+
+
+.government-table td {
+  padding: 15px 14px;
+
+  color: #1F2933;
+
+  font-size: 14px;
+
+  border-bottom: 1px solid #E8EEEB;
+}
+
+
+.government-table tbody tr:hover {
+  background: #F7FAF9;
+}
+
+
+/* ============================= */
+/* RISK BADGES */
+/* ============================= */
+
+.risk-badge {
+  display: inline-block;
+
+  padding: 5px 10px;
+
+  border-radius: 6px;
+
+  font-size: 12px;
+  font-weight: 700;
+}
+
+
+.risk-high {
+  background: #FDE7E7;
+  color: #C62828;
+}
+
+
+.risk-medium {
+  background: #FFF0DD;
+  color: #E67E22;
+}
+
+
+.risk-low {
+  background: #E3F2E5;
+  color: #2E7D32;
+}
+
+
+/* ============================= */
+/* STATUS */
+/* ============================= */
+
+.status-badge {
+  display: inline-block;
+
+  padding: 5px 10px;
+
+  border-radius: 6px;
+
+  background: #FFF0DD;
+  color: #E67E22;
+
+  font-size: 12px;
+  font-weight: 600;
+}
+
+
+/* ============================= */
+/* REVIEW BUTTON */
+/* ============================= */
+
+.review-btn {
+  border: none;
+
+  background: #227C70;
+  color: white;
+
+  padding: 7px 16px;
+
+  border-radius: 6px;
+
+  font-size: 13px;
+  font-weight: 600;
+
+  cursor: pointer;
+
+  transition: all 0.2s ease;
+}
+
+
+.review-btn:hover {
+  background: #12343B;
+}
+
+
+/* ============================= */
+/* RESPONSIVE */
+/* ============================= */
 
 @media (max-width: 900px) {
+
   .government-stats {
     grid-template-columns: repeat(2, 1fr);
   }
+
 }
 
+
 @media (max-width: 600px) {
+
   .government-page {
-    padding: 20px;
+    padding: 25px 20px;
   }
 
   .government-stats {
     grid-template-columns: 1fr;
   }
+
 }

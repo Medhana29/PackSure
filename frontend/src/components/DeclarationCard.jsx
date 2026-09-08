@@ -3,7 +3,12 @@ function DeclarationCard({ declaration }) {
 
   return (
     <div className="declaration-card">
-      <div className={`declaration-icon ${isCompliant ? "success" : "danger"}`}>
+
+      <div
+        className={`declaration-icon ${
+          isCompliant ? "success" : "danger"
+        }`}
+      >
         {isCompliant ? "✓" : "✗"}
       </div>
 
@@ -12,10 +17,11 @@ function DeclarationCard({ declaration }) {
 
         <p>
           {isCompliant
-            ? "Declaration detected"
+            ? declaration.value
             : "Declaration missing"}
         </p>
       </div>
+
     </div>
   );
 }

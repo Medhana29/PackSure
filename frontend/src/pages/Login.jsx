@@ -1,55 +1,103 @@
 import { useState } from "react";
-import { useNavigate, Link, useSearchParams } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
+import Logo from "../components/Logo";
+import authUsers from "../authUsers";
 
 function Login() {
   const navigate = useNavigate();
-  const [searchParams] = useSearchParams();
-
-  const role = searchParams.get("role") || "consumer";
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [loading, setLoading] = useState(false);
 
-  function handleLogin(e) {
+  async function handleLogin(e) {
     e.preventDefault();
 
-    // Mock login for prototype
-    if (email && password) {
-      localStorage.setItem("isLoggedIn", "true");
-      localStorage.setItem("userRole", role);
-
-      if (role === "product-owner") {
-        navigate("/manufacturer");
-      } else if (role === "government") {
-        navigate("/government");
-      } else {
-        navigate("/dashboard");
-      }
-    } else {
+    if (!email || !password) {
       alert("Please enter email and password");
+      return;
+    }
+
+    // Product Owner / Government demo login
+    const demoUser = authUsers.find(
+      (user) =>
+        user.email.toLowerCase() === email.toLowerCase() &&
+        user.password === password
+    );
+
+    if (demoUser) {
+      localStorage.setItem("isLoggedIn", "true");
+      localStorage.setItem("userRole", demoUser.role);
+      localStorage.setItem("userId", demoUser.id);
+      localStorage.setItem("userName", demoUser.name);
+      localStorage.setItem("userEmail", demoUser.email);
+
+      if (demoUser.role === "product-owner") {
+        navigate("/manufacturer");
+      } else if (demoUser.role === "government") {
+        navigate("/government");
+      }
+
+      return;
+    }
+
+    // Consumer login
+    try {
+      setLoading(true);
+
+      const response = await fetch(
+        "http://127.0.0.1:8001/api/auth/login",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            email: email,
+            password: password,
+          }),
+        }
+      );
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        alert(data.detail || "Invalid email or password");
+        return;
+      }
+
+      // Save login information
+      localStorage.setItem("isLoggedIn", "true");
+      localStorage.setItem("token", data.token);
+      localStorage.setItem("userRole", data.user.role);
+      localStorage.setItem("userId", data.user.id);
+      localStorage.setItem("userName", data.user.name);
+      localStorage.setItem("userEmail", data.user.email);
+
+      alert("Login successful!");
+
+      // Consumer dashboard
+      navigate("/dashboard");
+
+    } catch (error) {
+      console.error("Login error:", error);
+      alert("Cannot connect to server. Please try again.");
+    } finally {
+      setLoading(false);
     }
   }
 
-  const roleNames = {
-    consumer: "Consumer",
-    "product-owner": "Product Owner",
-    government: "Government Authority",
-  };
-
   return (
     <div className="auth-page">
+
       <div className="auth-card">
 
-        <h1>PackSure</h1>
+        <Logo size="large" />
+
+        <h1>Welcome to NiyamNetra</h1>
 
         <p className="auth-subtitle">
-          Product Compliance Checker
-        </p>
-
-        <h2>Welcome Back</h2>
-
-        <p>
-          Login as <strong>{roleNames[role]}</strong>
+          Login to continue
         </p>
 
         <form onSubmit={handleLogin}>
@@ -75,8 +123,9 @@ function Login() {
           <button
             type="submit"
             className="primary-btn full-width"
+            disabled={loading}
           >
-            Login
+            {loading ? "Logging in..." : "Login"}
           </button>
 
         </form>
@@ -89,6 +138,7 @@ function Login() {
         </p>
 
       </div>
+
     </div>
   );
 }

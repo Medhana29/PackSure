@@ -1,131 +1,313 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-
 import Navbar from "../components/Navbar";
-import ImageUploadCard from "../components/ImageUploadCard";
 
 function NewInspection() {
-
   const navigate = useNavigate();
 
   const [frontImage, setFrontImage] = useState(null);
   const [backImage, setBackImage] = useState(null);
-  const [sideImage, setSideImage] = useState(null);
 
-  function handleImageChange(event, setter) {
+  const [frontPreview, setFrontPreview] = useState(null);
+  const [backPreview, setBackPreview] = useState(null);
 
-    const file = event.target.files[0];
+  const [isScanning, setIsScanning] = useState(false);
+  const [error, setError] = useState("");
+
+  const handleFrontImage = (e) => {
+    const file = e.target.files[0];
 
     if (!file) return;
 
-    const imageUrl = URL.createObjectURL(file);
+    setFrontImage(file);
+    setFrontPreview(URL.createObjectURL(file));
+    setError("");
+  };
 
-    setter({
-      file: file,
-      preview: imageUrl
-    });
-  }
+  const handleBackImage = (e) => {
+    const file = e.target.files[0];
 
-  function continueToQuality() {
+    if (!file) return;
 
+    setBackImage(file);
+    setBackPreview(URL.createObjectURL(file));
+    setError("");
+  };
+
+  const handleScan = async () => {
     if (!frontImage || !backImage) {
-
-      alert(
-        "Front and Back images are required."
-      );
-
+      setError("Please upload both front and back images.");
       return;
     }
 
-    // Store temporarily for next screen
-    sessionStorage.setItem(
-      "frontImage",
-      frontImage.preview
-    );
+    setError("");
+    setIsScanning(true);
 
-    sessionStorage.setItem(
-      "backImage",
-      backImage.preview
-    );
+    try {
+      const formData = new FormData();
 
-    if (sideImage) {
-      sessionStorage.setItem(
-        "sideImage",
-        sideImage.preview
+      formData.append("front_image", frontImage);
+      formData.append("back_image", backImage);
+
+      console.log("Sending images to backend...");
+
+      const response = await fetch(
+        "http://127.0.0.1:8000/api/scan",
+        {
+          method: "POST",
+          body: formData,
+        }
       );
-    }
 
-    navigate("/quality");
-  }
+      console.log("Response status:", response.status);
+
+      if (!response.ok) {
+        const errorText = await response.text();
+
+        console.error("Backend error:", errorText);
+
+        throw new Error(
+          `Backend returned ${response.status}`
+        );
+      }
+
+      const data = await response.json();
+
+      console.log("========== BACKEND RESPONSE ==========");
+      console.log(data);
+
+      /*
+        Save the complete backend response.
+        Results.jsx will read this.
+      */
+      // Save latest result
+localStorage.setItem("scanResult", JSON.stringify(data));
+
+// Save result to history
+const existingHistory =
+  JSON.parse(localStorage.getItem("scanHistory")) || [];
+
+existingHistory.push({
+  ...data,
+
+  inspectionId: `INS-${Date.now()}`,
+
+  productName:
+    data.declarations?.product_name || "Unknown Product",
+
+  status:
+    data.compliance_check?.overall_status ||
+    "UNKNOWN",
+
+  risk:
+    data.compliance_check?.risk_level ||
+    "UNKNOWN",
+
+  date: new Date().toLocaleString(),
+
+  confidence: 0
+});
+
+localStorage.setItem(
+  "scanHistory",
+  JSON.stringify(existingHistory)
+);
+
+      console.log("Scan result saved.");
+
+      /*
+        Go to Results page
+      */
+      navigate("/results");
+
+    } catch (err) {
+      console.error("SCAN ERROR:", err);
+
+      setError(
+        "Unable to process the scan. Please try again."
+      );
+
+    } finally {
+      setIsScanning(false);
+    }
+  };
 
   return (
-    <div>
+    <div className="inspection-page">
 
       <Navbar />
 
       <main className="page-container">
 
-        <div className="page-heading">
+        <section className="inspection-header">
 
-          <h1>New Product Inspection</h1>
+          <h1>New Inspection</h1>
 
           <p>
-            Upload clear images of all sides of the product package.
+            Upload clear images of the front and back
+            of the product package.
           </p>
 
-        </div>
+        </section>
 
-        <div className="upload-grid">
+        <section className="inspection-upload-section">
 
-          <ImageUploadCard
-            title="Front Image"
-            description="Upload the front side of the package."
-            required={true}
-            image={frontImage?.preview}
-            onChange={(e) =>
-              handleImageChange(e, setFrontImage)
-            }
-          />
+          {/* FRONT */}
 
-          <ImageUploadCard
-            title="Back Image"
-            description="Upload the back side containing declarations."
-            required={true}
-            image={backImage?.preview}
-            onChange={(e) =>
-              handleImageChange(e, setBackImage)
-            }
-          />
+          <div className="upload-card">
 
-          <ImageUploadCard
-            title="Side Image"
-            description="Optional: Upload a side view."
-            required={false}
-            image={sideImage?.preview}
-            onChange={(e) =>
-              handleImageChange(e, setSideImage)
-            }
-          />
+            <h2>Front Image</h2>
 
-        </div>
+            <p>
+              Upload the front side of the package.
+            </p>
 
-        <div className="inspection-actions">
+            <label className="upload-box">
 
-          <button
-            className="secondary-btn"
-            onClick={() => navigate("/dashboard")}
-          >
-            Cancel
-          </button>
+              {frontPreview ? (
+                <img
+                  src={frontPreview}
+                  alt="Front preview"
+                  className="image-preview"
+                />
+              ) : (
+                <div className="upload-placeholder">
+
+                  <span className="upload-icon">
+                    📷
+                  </span>
+
+                  <span>
+                    Click to upload front image
+                  </span>
+
+                </div>
+              )}
+
+              <input
+                type="file"
+                accept="image/*"
+                onChange={handleFrontImage}
+                hidden
+              />
+
+            </label>
+
+            {frontImage && (
+              <p className="file-name">
+                {frontImage.name}
+              </p>
+            )}
+
+          </div>
+
+
+          {/* BACK */}
+
+          <div className="upload-card">
+
+            <h2>Back Image</h2>
+
+            <p>
+              Upload the back side of the package.
+            </p>
+
+            <label className="upload-box">
+
+              {backPreview ? (
+                <img
+                  src={backPreview}
+                  alt="Back preview"
+                  className="image-preview"
+                />
+              ) : (
+                <div className="upload-placeholder">
+
+                  <span className="upload-icon">
+                    📷
+                  </span>
+
+                  <span>
+                    Click to upload back image
+                  </span>
+
+                </div>
+              )}
+
+              <input
+                type="file"
+                accept="image/*"
+                onChange={handleBackImage}
+                hidden
+              />
+
+            </label>
+
+            {backImage && (
+              <p className="file-name">
+                {backImage.name}
+              </p>
+            )}
+
+          </div>
+
+        </section>
+
+
+        {/* ERROR */}
+
+        {error && (
+          <div className="inspection-error">
+            {error}
+          </div>
+        )}
+
+
+        {/* BUTTON */}
+
+        <section className="scan-action">
 
           <button
             className="primary-btn"
-            onClick={continueToQuality}
+            onClick={handleScan}
+            disabled={isScanning}
           >
-            Continue →
+
+            {isScanning
+              ? "Scanning..."
+              : "🔍 Scan Product"}
+
           </button>
 
-        </div>
+        </section>
+
+
+        {/* LOADING */}
+
+        {isScanning && (
+
+          <div className="scanning-message">
+
+            <div className="scanning-spinner">
+              ⏳
+            </div>
+
+            <h3>
+              Scanning Product...
+            </h3>
+
+            <p>
+              Extracting declarations and checking
+              compliance.
+            </p>
+
+            <p>
+              Please wait...
+            </p>
+
+          </div>
+
+        )}
 
       </main>
 

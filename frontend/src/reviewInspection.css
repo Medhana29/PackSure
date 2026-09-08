@@ -54,17 +54,22 @@
 .compliance-box {
   padding: 25px;
   border-radius: 12px;
-  background: #fff3cd;
+
+  background: #FFF0DD;
+  border: 1px solid #E8B86D;
+
   margin-bottom: 30px;
 }
 
 .compliance-box h3 {
   margin-bottom: 10px;
+  color: #1F2933;
 }
 
 .compliance-box p {
   margin: 0;
   font-weight: 600;
+  color: #C62828;
 }
 
 .review-actions {
@@ -83,17 +88,17 @@
 }
 
 .accept-btn {
-  background: #198754;
+  background: #2E7D32;
   color: white;
 }
 
 .reject-btn {
-  background: #dc3545;
+  background: #C62828;
   color: white;
 }
 
 .back-btn {
-  background: #6c757d;
+  background: #12343B;
   color: white;
 }
 

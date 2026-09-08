@@ -1,0 +1,170 @@
+.auth-page {
+  min-height: 100vh;
+
+  display: flex;
+  justify-content: center;
+  align-items: center;
+
+  background: #F7F8F4;
+
+  padding: 30px 20px;
+}
+
+.auth-card {
+  width: 100%;
+  max-width: 430px;
+
+  background: #FFFFFF;
+
+  border: 1px solid #D9E1DE;
+
+  border-radius: 16px;
+
+  padding: 35px 40px;
+
+  box-shadow: 0 8px 30px rgba(18, 52, 59, 0.08);
+
+  text-align: center;
+}
+
+.auth-card .niyamnetra-logo {
+  margin-bottom: 15px;
+}
+
+.auth-card h1 {
+  margin: 10px 0 8px;
+
+  color: #12343B;
+
+  font-size: 30px;
+
+  font-weight: 700;
+}
+
+.auth-role {
+  color: #64748B;
+
+  font-size: 15px;
+
+  margin: 0 0 25px;
+}
+
+.auth-form {
+  width: 100%;
+
+  text-align: left;
+}
+
+.form-group {
+  width: 100%;
+
+  margin-bottom: 18px;
+}
+
+.form-group label {
+  display: block;
+
+  margin-bottom: 7px;
+
+  color: #1F2933;
+
+  font-size: 14px;
+
+  font-weight: 600;
+}
+
+.form-group input {
+  display: block;
+
+  width: 100%;
+
+  box-sizing: border-box;
+
+  padding: 12px 14px;
+
+  border: 1px solid #D9E1DE;
+
+  border-radius: 8px;
+
+  background: #FFFFFF;
+
+  color: #1F2933;
+
+  font-size: 15px;
+
+  outline: none;
+}
+
+.form-group input:focus {
+  border-color: #227C70;
+
+  box-shadow: 0 0 0 3px rgba(34, 124, 112, 0.12);
+}
+
+.form-group input::placeholder {
+  color: #94A3B8;
+}
+
+.auth-btn {
+  display: block;
+
+  width: 100%;
+
+  padding: 12px;
+
+  margin-top: 5px;
+
+  background: #227C70;
+
+  color: #FFFFFF;
+
+  border: none;
+
+  border-radius: 8px;
+
+  font-size: 15px;
+
+  font-weight: 600;
+
+  cursor: pointer;
+
+  transition: all 0.2s ease;
+}
+
+.auth-btn:hover {
+  background: #12343B;
+}
+
+.auth-footer {
+  margin-top: 22px;
+
+  color: #64748B;
+
+  font-size: 14px;
+}
+
+.auth-footer a {
+  color: #227C70;
+
+  font-weight: 600;
+
+  text-decoration: none;
+}
+
+.auth-footer a:hover {
+  color: #12343B;
+
+  text-decoration: underline;
+}
+
+@media (max-width: 600px) {
+
+  .auth-card {
+    padding: 30px 25px;
+  }
+
+  .auth-card h1 {
+    font-size: 27px;
+  }
+
+}

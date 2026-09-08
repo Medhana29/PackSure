@@ -1,74 +1,209 @@
+/* ============================= */
+/* ROLE SELECTION PAGE */
+/* ============================= */
+
 .role-page {
   min-height: 100vh;
+
   display: flex;
   justify-content: center;
   align-items: center;
-  background: #f5f7fb;
+
+  background: #F7F8F4;
+
   padding: 40px 20px;
 }
+
+
+/* Main container */
 
 .role-container {
   width: 100%;
   max-width: 1100px;
+
   text-align: center;
 }
 
+
+/* Heading */
+
 .role-container h1 {
   font-size: 36px;
+  font-weight: 700;
+
+  color: #12343B;
+
   margin-bottom: 10px;
 }
 
+
+/* Subtitle */
+
 .role-subtitle {
-  color: #666;
-  font-size: 18px;
+  color: #64748B;
+
+  font-size: 17px;
+
   margin-bottom: 40px;
 }
 
+
+/* ============================= */
+/* ROLE CARDS */
+/* ============================= */
+
 .role-cards {
   display: flex;
+
   justify-content: center;
+
   gap: 25px;
+
   flex-wrap: wrap;
 }
+
 
 .role-card {
   width: 300px;
   min-height: 230px;
-  background: white;
+
+  background: #FFFFFF;
+
+  border: 1px solid #D9E1DE;
+
   border-radius: 14px;
+
   padding: 30px 25px;
-  box-shadow: 0 5px 20px rgba(0, 0, 0, 0.08);
+
+  box-shadow:
+    0 5px 20px rgba(18, 52, 59, 0.07);
+
   display: flex;
   flex-direction: column;
   justify-content: center;
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
+
+  position: relative;
+
+  overflow: hidden;
+
+  transition: all 0.25s ease;
 }
+
+
+/* Gold top accent */
+
+.role-card::before {
+  content: "";
+
+  position: absolute;
+
+  top: 0;
+  left: 0;
+
+  width: 100%;
+  height: 4px;
+
+  background: #E8B86D;
+}
+
+
+/* Card hover */
 
 .role-card:hover {
-  transform: translateY(-5px);
-  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.12);
+  transform: translateY(-6px);
+
+  border-color: #227C70;
+
+  box-shadow:
+    0 12px 28px rgba(18, 52, 59, 0.12);
 }
 
+
+/* ============================= */
+/* CARD CONTENT */
+/* ============================= */
+
 .role-card h2 {
+  color: #12343B;
+
+  font-size: 24px;
+
   margin-bottom: 15px;
 }
 
+
 .role-card p {
-  color: #666;
+  color: #64748B;
+
   min-height: 48px;
+
   margin-bottom: 25px;
+
+  line-height: 1.5;
 }
+
+
+/* ============================= */
+/* CONTINUE BUTTON */
+/* ============================= */
 
 .role-card button {
+  width: 100%;
+
   border: none;
+
   border-radius: 8px;
+
   padding: 11px 20px;
-  background: #0d6efd;
+
+  background: #227C70;
+
   color: white;
+
   font-size: 15px;
+
+  font-weight: 600;
+
   cursor: pointer;
+
+  transition: all 0.2s ease;
 }
 
+
 .role-card button:hover {
-  background: #0b5ed7;
+  background: #12343B;
+
+  transform: translateY(-1px);
+}
+
+
+/* ============================= */
+/* RESPONSIVE */
+/* ============================= */
+
+@media (max-width: 700px) {
+
+  .role-page {
+    padding: 30px 20px;
+  }
+
+  .role-container h1 {
+    font-size: 30px;
+  }
+
+  .role-subtitle {
+    font-size: 16px;
+    margin-bottom: 30px;
+  }
+
+  .role-cards {
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .role-card {
+    width: 100%;
+    max-width: 350px;
+  }
+
 }

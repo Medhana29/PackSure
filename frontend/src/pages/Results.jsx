@@ -1,147 +1,363 @@
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import Navbar from "../components/Navbar";
 import "../results.css";
-import inspectionData from "../mockData";
-
-import StatusBadge from "../components/StatusBadge";
-import RiskBadge from "../components/RiskBadge";
-import ConfidenceBar from "../components/ConfidenceBar";
-import DeclarationCard from "../components/DeclarationCard";
-import ViolationCard from "../components/ViolationCard";
-import RecommendationCard from "../components/RecommendationCard";
 
 function Results() {
   const navigate = useNavigate();
 
+  const [result, setResult] = useState(null);
+
+  useEffect(() => {
+    const savedResult = localStorage.getItem("scanResult");
+
+    if (savedResult) {
+      try {
+        setResult(JSON.parse(savedResult));
+      } catch (error) {
+        console.error("Unable to read scan result:", error);
+      }
+    }
+  }, []);
+
+  // No scan result available
+  if (!result) {
+    return (
+      <div>
+        <Navbar />
+
+        <main className="page-container">
+          <div className="no-results">
+            <h2>No Scan Result Found</h2>
+
+            <p>
+              Please scan a product first.
+            </p>
+
+            <button
+              className="primary-btn"
+              onClick={() => navigate("/inspection")}
+            >
+              + New Inspection
+            </button>
+          </div>
+        </main>
+      </div>
+    );
+  }
+
+  const declarations = result.declarations || {};
+  const compliance = result.compliance_check || {};
+
+  const violations = compliance.violations || [];
+  const checks = compliance.checks || [];
+
+  // Convert backend status into readable text
+  const getStatusText = (status) => {
+    if (!status) return "Not Available";
+
+    return status
+      .replaceAll("_", " ")
+      .toLowerCase()
+      .replace(/\b\w/g, (char) => char.toUpperCase());
+  };
+
   return (
-    <div className="page">
+    <div>
+      <Navbar />
 
-      {/* Header */}
-      <div className="page-header">
-        <div>
-          <h1>Inspection Results</h1>
-          <p>
-            Compliance analysis for {inspectionData.productName}
-          </p>
-        </div>
+      <main className="page-container">
 
-        <button
-          className="secondary-button"
-          onClick={() => navigate("/history")}
-        >
-          View History
-        </button>
-      </div>
+        {/* PAGE HEADER */}
+        <section className="results-header">
+          <div>
+            <h1>Inspection Results</h1>
 
-      {/* Product Summary */}
-      <div className="result-summary">
+            <p>
+              Results extracted from the product package.
+            </p>
+          </div>
+        </section>
 
-        <div>
-          <p className="label">Product</p>
-          <h2>{inspectionData.productName}</h2>
 
-          <p className="inspection-id">
-            Inspection ID: {inspectionData.inspectionId}
-          </p>
-        </div>
+        {/* OVERALL RESULT */}
+        <section className="result-summary">
 
-        <div className="result-status">
-          <StatusBadge status={inspectionData.status} />
-          <RiskBadge risk={inspectionData.risk} />
-        </div>
+          <div className="summary-card">
 
-      </div>
+            <h2>Overall Status</h2>
 
-      {/* Confidence */}
-      <div className="card">
-        <ConfidenceBar
-          confidence={inspectionData.confidence}
-        />
-      </div>
+            <div
+              className={
+                compliance.overall_status ===
+                "POTENTIALLY_COMPLIANT"
+                  ? "status-compliant"
+                  : "status-non-compliant"
+              }
+            >
+              {getStatusText(
+                compliance.overall_status
+              )}
+            </div>
 
-      {/* Declaration Details */}
-      <section>
+          </div>
 
-        <div className="section-header">
-          <h2>Declaration Details</h2>
-          <p>Detected mandatory product information</p>
-        </div>
 
-        <div className="declaration-grid">
+          <div className="summary-card">
 
-          {inspectionData.declarations.map((declaration, index) => (
-            <DeclarationCard
-              key={index}
-              declaration={declaration}
-            />
-          ))}
+            <h2>Risk Level</h2>
 
-        </div>
+            <div className="risk-value">
+              {compliance.risk_level || "UNKNOWN"}
+            </div>
 
-      </section>
+          </div>
 
-      {/* Violations */}
-      <section>
+        </section>
 
-        <div className="section-header">
-          <h2>Compliance Issues</h2>
-          <p>Potential problems detected during inspection</p>
-        </div>
 
-        <div className="violations">
+        {/* DECLARATIONS */}
+        <section className="results-section">
 
-          {inspectionData.violations.map((violation, index) => (
-            <ViolationCard
-              key={index}
-              violation={violation}
-            />
-          ))}
+          <h2>Detected Declarations</h2>
 
-        </div>
+          <div className="declarations-grid">
 
-      </section>
+            {/* PRODUCT NAME */}
+            <div className="declaration-card">
 
-      {/* Recommendations */}
-      <section>
+              <h3>Product Name</h3>
 
-        <div className="section-header">
-          <h2>Recommendations</h2>
-          <p>Suggested actions to improve compliance</p>
-        </div>
+              <p>
+                {declarations.product_name ||
+                  "Not detected"}
+              </p>
 
-        <div>
+            </div>
 
-          {inspectionData.recommendations.map(
-            (recommendation, index) => (
-              <RecommendationCard
-                key={index}
-                recommendation={recommendation}
-              />
-            )
+
+            {/* MANUFACTURER */}
+            <div className="declaration-card">
+
+              <h3>Manufacturer</h3>
+
+              <p>
+                {declarations.manufacturer ||
+                  "Not detected"}
+              </p>
+
+            </div>
+
+
+            {/* NET QUANTITY */}
+            <div className="declaration-card">
+
+              <h3>Net Quantity</h3>
+
+              <p>
+                {declarations.net_quantity ||
+                  "Not detected"}
+              </p>
+
+            </div>
+
+
+            {/* MRP */}
+            <div className="declaration-card">
+
+              <h3>MRP</h3>
+
+              <p>
+                {declarations.mrp ||
+                  "Not detected"}
+              </p>
+
+            </div>
+
+
+            {/* MANUFACTURING DATE */}
+            <div className="declaration-card">
+
+              <h3>Manufacturing Date</h3>
+
+              <p>
+                {declarations.manufacturing_date ||
+                  "Not detected"}
+              </p>
+
+            </div>
+
+
+            {/* CONSUMER CARE */}
+            <div className="declaration-card">
+
+              <h3>Consumer Care</h3>
+
+              <p>
+                {declarations.consumer_care ||
+                  "Not detected"}
+              </p>
+
+            </div>
+
+          </div>
+
+        </section>
+
+
+        {/* COMPLIANCE CHECKS */}
+        {checks.length > 0 && (
+          <section className="results-section">
+
+            <h2>Compliance Checks</h2>
+
+            <div className="checks-container">
+
+              {checks.map((check, index) => (
+
+                <div
+                  className="check-item"
+                  key={index}
+                >
+
+                  <div>
+
+                    <strong>
+                      {getStatusText(check.field)}
+                    </strong>
+
+                    <p>
+                      {check.message}
+                    </p>
+
+                  </div>
+
+                  <span
+                    className={
+                      check.status === "PASS"
+                        ? "check-pass"
+                        : "check-fail"
+                    }
+                  >
+                    {check.status}
+                  </span>
+
+                </div>
+
+              ))}
+
+            </div>
+
+          </section>
+        )}
+
+
+        {/* VIOLATIONS */}
+        <section className="results-section">
+
+          <h2>Violations</h2>
+
+          {violations.length === 0 ? (
+
+            <div className="no-violations">
+
+              <h3>
+                ✓ No violations detected
+              </h3>
+
+              <p>
+                All detected declarations passed
+                the current compliance checks.
+              </p>
+
+            </div>
+
+          ) : (
+
+            <div className="violations-container">
+
+              {violations.map(
+                (violation, index) => (
+
+                  <div
+                    className="violation-item"
+                    key={index}
+                  >
+
+                    <div>
+
+                      <h3>
+                        {getStatusText(
+                          violation.field
+                        )}
+                      </h3>
+
+                      <p>
+                        {violation.message}
+                      </p>
+
+                    </div>
+
+                    <span className="violation-severity">
+                      {violation.severity}
+                    </span>
+
+                  </div>
+
+                )
+              )}
+
+            </div>
+
           )}
 
-        </div>
+        </section>
 
-      </section>
 
-      {/* Buttons */}
-      <div className="action-buttons">
+        {/* RAW OCR TEXT */}
+        <section className="results-section">
 
-        <button
-          className="secondary-button"
-          onClick={() => alert("Review request submitted!")}
-        >
-          Request Review
-        </button>
+          <details>
 
-        <button
-          className="primary-button"
-          onClick={() => navigate("/report")}
-        >
-          View Report
-        </button>
+            <summary>
+              View Extracted OCR Text
+            </summary>
 
-      </div>
+            <pre className="raw-text">
+              {result.raw_text ||
+                "No OCR text available."}
+            </pre>
 
+          </details>
+
+        </section>
+
+
+        {/* ACTION BUTTONS */}
+        <section className="results-actions">
+
+          <button
+            className="secondary-btn"
+            onClick={() =>
+              navigate("/inspection")
+            }
+          >
+            Scan Another Product
+          </button>
+
+
+          <button
+            className="primary-btn"
+            onClick={() =>
+              navigate("/report")
+            }
+          >
+            Show My Report
+          </button>
+
+        </section>
+
+      </main>
     </div>
   );
 }

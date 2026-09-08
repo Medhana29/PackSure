@@ -1,26 +1,28 @@
 import React from "react";
 import { useNavigate } from "react-router-dom";
+import Logo from "../components/Logo";
 import "../roleSelection.css";
 
 const RoleSelection = () => {
+
   const navigate = useNavigate();
 
   const roles = [
     {
       title: "Consumer",
       description: "Scan and check packaged products",
-      role: "consumer",
+      role: "consumer"
     },
     {
       title: "Product Owner",
       description: "Manage products and compliance",
-      role: "product-owner",
+      role: "product-owner"
     },
     {
       title: "Government Authority",
       description: "Review products and violations",
-      role: "government",
-    },
+      role: "government"
+    }
   ];
 
   const handleRoleSelect = (role) => {
@@ -29,29 +31,59 @@ const RoleSelection = () => {
 
   return (
     <div className="role-page">
+
       <div className="role-container">
-        <h1>Welcome to PackSure</h1>
+
+        {/* NiyamNetra Logo */}
+        <Logo size="large" />
+
+        <h1>
+          Welcome to NiyamNetra
+        </h1>
+
+        <p className="role-subtitle">
+          Scan. Check. Comply.
+        </p>
 
         <p className="role-subtitle">
           Select your role to continue
         </p>
 
-        <div className="role-cards">
-          {roles.map((role) => (
-            <div className="role-card" key={role.role}>
-              <h2>{role.title}</h2>
 
-              <p>{role.description}</p>
+        {/* Role Cards */}
+        <div className="role-cards">
+
+          {roles.map((role) => (
+
+            <div
+              className="role-card"
+              key={role.role}
+            >
+
+              <h2>
+                {role.title}
+              </h2>
+
+              <p>
+                {role.description}
+              </p>
 
               <button
-                onClick={() => handleRoleSelect(role.role)}
+                onClick={() =>
+                  handleRoleSelect(role.role)
+                }
               >
                 Continue
               </button>
+
             </div>
+
           ))}
+
         </div>
+
       </div>
+
     </div>
   );
 };

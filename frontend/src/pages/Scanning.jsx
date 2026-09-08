@@ -29,7 +29,7 @@ function Scanning() {
         <h1>Scanning Product...</h1>
 
         <p>
-          Please wait while PackSure processes
+          Please wait while NiyamNetra processes
           your package images.
         </p>
 

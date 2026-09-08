@@ -1,4 +1,5 @@
 import { Link } from "react-router-dom";
+import Logo from "./Logo";
 
 function Navbar() {
   return (
@@ -6,7 +7,7 @@ function Navbar() {
 
       <div className="navbar-logo">
         <Link to="/dashboard">
-          PackSure
+          <Logo size="navbar-logo-size" />
         </Link>
       </div>
 

@@ -5,64 +5,94 @@
 }
 
 body {
+  margin: 0;
+  padding: 0;
+  background: #F7F8F4;
+  color: #1F2933;
   font-family: Arial, Helvetica, sans-serif;
-  background: #f5f7fb;
-  color: #1f2937;
 }
-
 a {
   text-decoration: none;
   color: inherit;
 }
-
-/* =========================
-   NAVBAR
-========================= */
-
-.navbar {
+/* ============================= */
+/* NAVBAR */
+/* ============================= */
+.navbar,
+.dashboard-navbar {
   height: 70px;
-  background: white;
-  border-bottom: 1px solid #e5e7eb;
+  background: #D8E8E5;
+  border-bottom: 2px solid #227C70;
 
   display: flex;
   align-items: center;
   justify-content: space-between;
 
   padding: 0 7%;
+
+  box-shadow: 0 2px 10px rgba(18, 52, 59, 0.08);
+}
+.navbar-logo {
+  display: flex;
+  align-items: center;
 }
 
 .navbar-logo a {
-  font-size: 25px;
-  font-weight: 700;
+  display: flex;
+  align-items: center;
+  text-decoration: none;
 }
 
 .navbar-links {
   display: flex;
-  gap: 28px;
+  align-items: center;
+  gap: 20px;
 }
 
 .navbar-links a {
   font-size: 15px;
+  font-weight: 500;
+  color: #12343B;
+  text-decoration: none;
+
+  padding: 8px 12px;
+  border-radius: 7px;
+
+  transition: all 0.2s ease;
 }
 
 .navbar-links a:hover {
-  text-decoration: underline;
+  background: #BFDCD7;
+  color: #12343B;
 }
 
 .logout-btn {
   padding: 9px 16px;
-  border: 1px solid #d1d5db;
+
+  background: transparent;
+
+  color: #12343B;
+
+  border: 1px solid #E8B86D;
+
   border-radius: 7px;
+
+  text-decoration: none;
+
+  transition: all 0.2s ease;
 }
+
+.logout-btn:hover {
+  background: #E8B86D;
+  color: #12343B;
+}
+
 
 /* =========================
    COMMON
 ========================= */
-
 .page-container {
-  width: 86%;
-  max-width: 1200px;
-  margin: 40px auto;
+  padding: 20px 7%;
 }
 
 .page-heading {
@@ -165,20 +195,43 @@ a {
    DASHBOARD
 ========================= */
 
+/* =========================
+   COMMON DASHBOARD HEADER
+========================= */
+
 .dashboard-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 30px;
+  margin-top: 0;
+  padding-top: 0;
 }
 
 .dashboard-header h1 {
+  margin: 0;
   font-size: 32px;
-  margin-bottom: 8px;
+  font-weight: 700;
+  color: #3f2f29;
 }
 
 .dashboard-header p {
-  color: #6b7280;
+  margin-top: 8px;
+  margin-bottom: 0;
+  color: #6f625d;
+  font-size: 16px;
+}
+/* =========================
+   COMMON CARDS
+========================= */
+
+.dashboard-box {
+  background: #ffffff;
+  border: 1px solid rgba(107, 75, 62, 0.18);
+  border-radius: 14px;
+  transition: all 0.2s ease;
+}
+
+.dashboard-box:hover {
+  border-color: #6b4b3e;
+  box-shadow: 0 8px 20px rgba(107, 75, 62, 0.12);
+  transform: translateY(-4px);
 }
 
 .scan-card {
@@ -547,5 +600,124 @@ a {
 
   .page-container {
     width: 92%;
+  }
+}
+/* =========================
+   Notifications
+   ========================= */
+
+.notification-card {
+  background: #FFFFFF;
+  border: 1px solid #D9E1DE;
+  border-left: 4px solid #227C70;
+
+  border-radius: 12px;
+  padding: 20px;
+
+  display: flex;
+  align-items: flex-start;
+  gap: 15px;
+
+  box-shadow: 0 4px 15px rgba(18, 52, 59, 0.06);
+}
+
+.notification-icon {
+  font-size: 28px;
+}
+
+.notification-content h3 {
+  color: #12343B;
+}
+
+.notification-content p {
+  color: #64748B;
+}
+
+.notification-content strong {
+  color: #227C70;
+}
+/* =========================
+   COMPLIANCE STATUS COLORS
+========================= */
+
+/* 🟢 COMPLIANT */
+
+.status-compliant {
+  background-color: #d1e7dd;
+  color: #198754;
+  border: 1px solid #198754;
+  padding: 6px 12px;
+  border-radius: 7px;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+
+/* 🔴 NON-COMPLIANT */
+
+.status-non-compliant {
+  background-color: #f8d7da;
+  color: #dc3545;
+  border: 1px solid #dc3545;
+  padding: 6px 12px;
+  border-radius: 7px;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+
+/* 🟠 UNDER REVIEW */
+
+.status-review {
+  background-color: #fef3c7;
+  color: #b77900;
+  border: 1px solid #f59e0b;
+  padding: 6px 12px;
+  border-radius: 7px;
+  font-size: 13px;
+  font-weight: 700;
+}
+/* ============================= */
+/* CONSUMER DASHBOARD */
+/* ============================= */
+
+.dashboard-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 22px;
+  margin-top: 30px;
+}
+
+.dashboard-icon {
+  display: inline-flex;
+  width: 48px;
+  height: 48px;
+
+  align-items: center;
+  justify-content: center;
+
+  background: #DDF1ED;
+  border-radius: 12px;
+
+  font-size: 24px;
+  margin-bottom: 15px;
+}
+
+.dashboard-box h3 {
+  margin: 0 0 8px;
+  font-size: 18px;
+}
+
+.dashboard-box p {
+  margin: 0;
+  line-height: 1.5;
+}
+
+
+/* Mobile */
+
+@media (max-width: 800px) {
+  .dashboard-grid {
+    grid-template-columns: 1fr;
   }
 }
