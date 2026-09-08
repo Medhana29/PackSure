@@ -9,17 +9,22 @@ import ImageQuality from "./pages/ImageQuality";
 import Scanning from "./pages/Scanning";
 import RequestReview from "./pages/RequestReview";
 
+
 import Results from "./pages/Results";
 import Report from "./pages/Report";
 import History from "./pages/History";
 
+import ManufacturerDashboard from "./pages/manufacturer/ManufacturerDashboard";
+import GovernmentDashboard from "./pages/government/GovernmentDashboard";
+import ReviewInspection from "./pages/government/ReviewInspection";
+import RoleSelection from "./pages/RoleSelection";
 function App() {
   return (
     <BrowserRouter>
       <Routes>
 
         {/* Authentication */}
-        <Route path="/" element={<Login />} />
+        <Route path="/" element={<RoleSelection />} />
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
 
@@ -35,7 +40,21 @@ function App() {
         <Route path="/results" element={<Results />} />
         <Route path="/report" element={<Report />} />
         <Route path="/history" element={<History />} />
+        {/* Manufacturer Flow */}
+        <Route
+            path="/manufacturer"
+            element={<ManufacturerDashboard />}
+        />
+        {/* Government Authority Flow */}
+          <Route
+             path="/government"
+             element={<GovernmentDashboard />}
+          />
 
+          <Route
+            path="/government/review/:inspectionId"
+            element={<ReviewInspection />}
+          />
       </Routes>
     </BrowserRouter>
   );
