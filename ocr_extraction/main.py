@@ -6,11 +6,33 @@ import shutil
 
 from paddleocr import PaddleOCR
 from fastapi import FastAPI, UploadFile, File
+from fastapi.middleware.cors import CORSMiddleware
 
 from compliance.engine import check_compliance
 
 
+# ============================================================
+# FASTAPI APP
+# ============================================================
+
 app = FastAPI()
+
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=[
+        "http://localhost:5173",
+        "http://127.0.0.1:5173"
+    ],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+
+# ============================================================
+# UPLOAD DIRECTORY
+# ============================================================
 
 UPLOAD_DIR = "uploads"
 os.makedirs(UPLOAD_DIR, exist_ok=True)
@@ -20,14 +42,20 @@ os.makedirs(UPLOAD_DIR, exist_ok=True)
 # 1. LOAD PADDLEOCR
 # ============================================================
 
+print("\n" + "=" * 60, flush=True)
+print("[SYSTEM] Loading PaddleOCR...", flush=True)
+print("=" * 60, flush=True)
+
 ocr = PaddleOCR(
     lang="en",
     enable_mkldnn=False
 )
 
+print("[SYSTEM] PaddleOCR loaded successfully.", flush=True)
+
 
 # ============================================================
-# 2. OCR
+# 2. PARSE PADDLEOCR RESULT
 # ============================================================
 
 def parse_ocr_result(result):
@@ -55,7 +83,6 @@ def parse_ocr_result(result):
         if hasattr(scores, "tolist"):
             scores = scores.tolist()
 
-        # Make sure both lists have values
         for text, score in zip(texts, scores):
 
             if text is None:
@@ -65,80 +92,89 @@ def parse_ocr_result(result):
 
             if text:
 
-                lines.append({
-                    "text": text,
-                    "confidence": float(score)
-                })
+                lines.append(
+                    {
+                        "text": text,
+                        "confidence": float(score)
+                    }
+                )
 
     return lines
 
 
+# ============================================================
+# 3. RUN OCR
+# ============================================================
+
 def run_ocr(image_path):
+
+    print("\n" + "=" * 60, flush=True)
+    print(f"[OCR] Starting OCR for: {image_path}", flush=True)
+    print("=" * 60, flush=True)
 
     image = cv2.imread(image_path)
 
     if image is None:
+
         raise ValueError(
             f"Could not read image: {image_path}"
         )
 
-    images = [image]
-
-    # --------------------------------------------------------
-    # Create enlarged version for small printed text
-    # --------------------------------------------------------
-
     h, w = image.shape[:2]
 
-    if max(h, w) < 2500:
+    print(
+        f"[OCR] Image size: {w} x {h}",
+        flush=True
+    )
 
-        enlarged = cv2.resize(
+    # --------------------------------------------------------
+    # Resize only if image is small
+    # --------------------------------------------------------
+
+    if max(h, w) < 1500:
+
+        scale = 1500 / max(h, w)
+
+        image = cv2.resize(
             image,
             None,
-            fx=2,
-            fy=2,
+            fx=scale,
+            fy=scale,
             interpolation=cv2.INTER_CUBIC
         )
 
-        # Mild sharpening
-        blurred = cv2.GaussianBlur(
-            enlarged,
-            (0, 0),
-            1.2
+        print(
+            f"[OCR] Image resized to: "
+            f"{image.shape[1]} x {image.shape[0]}",
+            flush=True
         )
 
-        sharpened = cv2.addWeighted(
-            enlarged,
-            1.35,
-            blurred,
-            -0.35,
-            0
-        )
-
-        images.append(sharpened)
-
     # --------------------------------------------------------
-    # Run OCR
+    # Run PaddleOCR
     # --------------------------------------------------------
 
-    all_lines = []
+    print(
+        "[OCR] Running PaddleOCR...",
+        flush=True
+    )
 
-    for img in images:
+    result = ocr.predict(image)
 
-        result = ocr.predict(img)
+    print(
+        "[OCR] PaddleOCR finished. Parsing result...",
+        flush=True
+    )
 
-        parsed = parse_ocr_result(result)
-
-        all_lines.extend(parsed)
+    parsed = parse_ocr_result(result)
 
     # --------------------------------------------------------
     # Remove duplicate lines
-    # Keep the version with the highest confidence
+    # Keep highest confidence
     # --------------------------------------------------------
 
     best_lines = {}
 
-    for item in all_lines:
+    for item in parsed:
 
         line = item["text"]
         confidence = item["confidence"]
@@ -164,38 +200,49 @@ def run_ocr(image_path):
 
     ocr_lines = list(best_lines.values())
 
+    print(
+        f"[OCR] Extracted "
+        f"{len(ocr_lines)} unique text lines.",
+        flush=True
+    )
+
     # --------------------------------------------------------
     # Print OCR confidence
     # --------------------------------------------------------
 
     print(
-        "\n================ OCR CONFIDENCE ================\n"
+        "\n================ OCR CONFIDENCE ================",
+        flush=True
     )
 
     for item in ocr_lines:
 
         print(
             f"{item['text']} "
-            f"(confidence: {item['confidence']:.2%})"
+            f"(confidence: {item['confidence']:.2%})",
+            flush=True
         )
 
-    # --------------------------------------------------------
-    # Return:
-    #
-    # 1. Plain text lines for existing extraction functions
-    # 2. OCR details containing confidence
-    # --------------------------------------------------------
+    print(
+        "=================================================\n",
+        flush=True
+    )
 
     lines = [
         item["text"]
         for item in ocr_lines
     ]
 
+    print(
+        "[OCR] OCR processing completed successfully.",
+        flush=True
+    )
+
     return lines, ocr_lines
 
 
 # ============================================================
-# 3. CLEAN OCR
+# 4. CLEAN OCR LINE
 # ============================================================
 
 def clean_line(line):
@@ -211,21 +258,34 @@ def clean_line(line):
         line
     )
 
+    # --------------------------------------------------------
     # Common OCR mistakes
+    # --------------------------------------------------------
+
     replacements = {
 
+        # Manufacturing
         "Manufacturea": "Manufactured",
         "Manufacturec": "Manufactured",
         "Manufacturecl": "Manufactured",
+        "Manufacturinq": "Manufacturing",
+        "Manufacluring": "Manufacturing",
 
+        # Net Quantity
         "Nct Quantity": "Net Quantity",
         "Nct": "Net",
 
+        # Consumer
         "Consuner": "Consumer",
         "consuner": "consumer",
 
+        # Calls
         "CalIs": "Calls",
-        "calIs": "calls"
+        "calIs": "calls",
+
+        # MRP
+        "M.R.P": "MRP",
+        "M.R.P.": "MRP"
     }
 
     for old, new in replacements.items():
@@ -237,6 +297,10 @@ def clean_line(line):
 
     return line
 
+
+# ============================================================
+# 5. NORMALIZE LINES
+# ============================================================
 
 def normalize_lines(lines):
 
@@ -253,15 +317,68 @@ def normalize_lines(lines):
 
 
 # ============================================================
-# 4. COMMON PATTERNS
+# 6. COMMON PATTERNS
 # ============================================================
 
+# ------------------------------------------------------------
+# DATE
+#
+# Supports:
+# 08/2026
+# 08-2026
+# 08/26
+# 08-26
+# 08/08/2026
+# August 2026
+# ------------------------------------------------------------
+
 DATE_PATTERN = re.compile(
-    r"\b(?:0?[1-9]|[12]\d|3[01])[/-]"
-    r"(?:0?[1-9]|1[0-2])[/-]"
-    r"(?:\d{2}|\d{4})\b"
+    r"\b(?:"
+    
+    # DD/MM/YYYY
+    r"(?:0?[1-9]|[12]\d|3[01])"
+    r"[/-]"
+    r"(?:0?[1-9]|1[0-2])"
+    r"[/-]"
+    r"(?:\d{2}|\d{4})"
+
+    r"|"
+
+    # MM/YYYY
+    r"(?:0?[1-9]|1[0-2])"
+    r"[/-]"
+    r"\d{4}"
+
+    r"|"
+
+    # MM/YY
+    r"(?:0?[1-9]|1[0-2])"
+    r"[/-]"
+    r"\d{2}"
+
+    r"|"
+
+    # Month YYYY
+    r"(?:JANUARY|FEBRUARY|MARCH|APRIL|MAY|JUNE|JULY|"
+    r"AUGUST|SEPTEMBER|OCTOBER|NOVEMBER|DECEMBER)"
+    r"\s+\d{4}"
+
+    r")\b",
+    re.IGNORECASE
 )
 
+
+# ------------------------------------------------------------
+# QUANTITY
+#
+# Supports:
+# 5 kg
+# 500 g
+# 1 kg
+# 1.5 kg
+# 500 ml
+# 1 L
+# ------------------------------------------------------------
 
 QUANTITY_PATTERN = re.compile(
     r"\b"
@@ -273,6 +390,10 @@ QUANTITY_PATTERN = re.compile(
 )
 
 
+# ------------------------------------------------------------
+# PHONE
+# ------------------------------------------------------------
+
 PHONE_PATTERN = re.compile(
     r"(?<!\d)"
     r"([6-9]\d{9})"
@@ -281,32 +402,105 @@ PHONE_PATTERN = re.compile(
 
 
 # ============================================================
-# 5. PRODUCT NAME
+# 7. PRODUCT NAME
 # ============================================================
 
 def extract_product_name(lines):
 
+    print(
+        "\n[EXTRACT] Searching for Product Name...",
+        flush=True
+    )
+
     # --------------------------------------------------------
-    # Explicit PRODUCT NAME
+    # 1. Explicit PRODUCT NAME
+    #
+    # Example:
+    # Product Name : Premium Basmati Rice
     # --------------------------------------------------------
+
+    product_patterns = [
+
+        re.compile(
+            r"\bPRODUCT\s+NAME\b"
+            r"\s*[:\-]?\s*(.+)",
+            re.IGNORECASE
+        ),
+
+        re.compile(
+            r"\bPRODUCT\b"
+            r"\s*[:\-]\s*(.+)",
+            re.IGNORECASE
+        )
+    ]
 
     for line in lines:
 
-        match = re.search(
-            r"\bPRODUCT\s*NAME\s*[:\-]?\s*(.+)",
-            line,
-            re.IGNORECASE
-        )
+        line = clean_line(line)
 
-        if match:
+        for pattern in product_patterns:
 
-            value = match.group(1).strip()
+            match = pattern.search(line)
 
-            if value:
-                return value
+            if match:
+
+                value = match.group(1).strip()
+
+                value = value.strip(" :-")
+
+                if value:
+
+                    print(
+                        f"[EXTRACT] Product Name found: "
+                        f"{value}",
+                        flush=True
+                    )
+
+                    return value
 
     # --------------------------------------------------------
-    # Generic product-name detection
+    # 2. Product Name split into two lines
+    #
+    # Product Name
+    # Premium Basmati Rice
+    # --------------------------------------------------------
+
+    for i, line in enumerate(lines):
+
+        if re.search(
+            r"\bPRODUCT\s+NAME\b",
+            line,
+            re.IGNORECASE
+        ):
+
+            for candidate in lines[i + 1:i + 4]:
+
+                candidate = clean_line(candidate)
+
+                if not candidate:
+                    continue
+
+                if re.search(
+                    r"\b(?:MRP|MANUFACTURER|"
+                    r"NET\s+QUANTITY|DATE|"
+                    r"CONSUMER|CARE)\b",
+                    candidate,
+                    re.IGNORECASE
+                ):
+                    continue
+
+                if len(candidate) >= 3:
+
+                    print(
+                        f"[EXTRACT] Product Name found "
+                        f"on next line: {candidate}",
+                        flush=True
+                    )
+
+                    return candidate
+
+    # --------------------------------------------------------
+    # 3. Generic fallback
     # --------------------------------------------------------
 
     ignored = [
@@ -331,7 +525,6 @@ def extract_product_name(lines):
 
         "NUTRITION",
         "NUTRITIONAL",
-
         "SERVING",
         "ENERGY",
         "PROTEIN",
@@ -339,16 +532,20 @@ def extract_product_name(lines):
         "CALORIES",
         "SODIUM",
         "FAT",
-
         "RDA",
 
         "MRP",
         "NET QUANTITY",
         "BATCH",
+
         "MANUFACTURED",
+        "MANUFACTURER",
         "PACKED BY",
         "MARKETED BY",
-        "IMPORTED BY"
+        "IMPORTED BY",
+
+        "CONSUMER CARE",
+        "CUSTOMER CARE"
     ]
 
     candidates = []
@@ -390,19 +587,22 @@ def extract_product_name(lines):
 
         score = 0
 
-        if 4 <= len(line) <= 40:
+        if 4 <= len(line) <= 50:
             score += 3
 
-        if 1 <= len(line.split()) <= 5:
+        if 1 <= len(line.split()) <= 7:
             score += 3
 
         if letters / max(len(line), 1) >= 0.55:
             score += 2
 
-        # Product-type signals
+        # Product type signals
         if any(
             word in upper
             for word in [
+
+                "RICE",
+                "BASMATI",
                 "SPREAD",
                 "BUTTER",
                 "BISCUIT",
@@ -438,60 +638,176 @@ def extract_product_name(lines):
             reverse=True
         )
 
-        return candidates[0][2]
+        result = candidates[0][2]
+
+        print(
+            f"[EXTRACT] Product Name fallback: "
+            f"{result}",
+            flush=True
+        )
+
+        return result
+
+    print(
+        "[EXTRACT] Product Name NOT found.",
+        flush=True
+    )
 
     return None
 
 
 # ============================================================
-# 6. MRP
+# 8. MRP
 # ============================================================
 
 def extract_mrp(lines):
 
-    patterns = [
+    print(
+        "\n[EXTRACT] Searching for MRP...",
+        flush=True
+    )
 
-        r"\bM\.?\s*R\.?\s*P\.?"
-        r"\s*(?:₹|RS\.?|INR)?"
-        r"\s*[:.\-]?"
-        r"\s*(\d+(?:\.\d{1,2})?)",
+    # --------------------------------------------------------
+    # Supports:
+    #
+    # MRP: ₹650.00
+    # MRP ₹650.00
+    # MRP: Rs. 650
+    # MRP Rs 650
+    # M.R.P: 650
+    # Maximum Retail Price: ₹650
+    # --------------------------------------------------------
 
-        r"\bMRP\b"
-        r"[^0-9]{0,15}"
-        r"(\d+(?:\.\d{1,2})?)"
+    mrp_patterns = [
+
+        # MRP ₹650
+        re.compile(
+            r"\bM\s*\.?\s*R\s*\.?\s*P\s*\.?"
+            r"\s*[:\-]?\s*"
+            r"(?:₹|RS\.?|INR)?"
+            r"\s*"
+            r"(\d+(?:\.\d{1,2})?)",
+            re.IGNORECASE
+        ),
+
+        # Maximum Retail Price
+        re.compile(
+            r"\bMAXIMUM\s+RETAIL\s+PRICE\b"
+            r"\s*[:\-]?\s*"
+            r"(?:₹|RS\.?|INR)?"
+            r"\s*"
+            r"(\d+(?:\.\d{1,2})?)",
+            re.IGNORECASE
+        ),
+
+        # MRP somewhere before number
+        re.compile(
+            r"\bMRP\b"
+            r"[^0-9₹]{0,30}"
+            r"(?:₹|RS\.?|INR)?"
+            r"\s*"
+            r"(\d+(?:\.\d{1,2})?)",
+            re.IGNORECASE
+        )
     ]
+
+    # --------------------------------------------------------
+    # Search same line
+    # --------------------------------------------------------
 
     for line in lines:
 
-        for pattern in patterns:
+        line = clean_line(line)
 
-            match = re.search(
-                pattern,
-                line,
-                re.IGNORECASE
-            )
+        for pattern in mrp_patterns:
+
+            match = pattern.search(line)
 
             if match:
 
-                return "₹" + match.group(1)
+                value = match.group(1)
+
+                result = f"₹{value}"
+
+                print(
+                    f"[EXTRACT] MRP found: {result}",
+                    flush=True
+                )
+
+                return result
+
+    # --------------------------------------------------------
+    # OCR may split:
+    #
+    # MRP
+    # ₹650.00
+    # --------------------------------------------------------
+
+    for i, line in enumerate(lines):
+
+        if re.search(
+            r"\bM\s*\.?\s*R\s*\.?\s*P\s*\.?\b",
+            line,
+            re.IGNORECASE
+        ):
+
+            nearby = lines[i:i + 4]
+
+            for candidate in nearby:
+
+                candidate = clean_line(candidate)
+
+                match = re.search(
+                    r"(?:₹|RS\.?|INR)?"
+                    r"\s*"
+                    r"(\d+(?:\.\d{1,2})?)",
+                    candidate,
+                    re.IGNORECASE
+                )
+
+                if match:
+
+                    value = match.group(1)
+
+                    if float(value) > 0:
+
+                        result = f"₹{value}"
+
+                        print(
+                            f"[EXTRACT] MRP found "
+                            f"on nearby line: {result}",
+                            flush=True
+                        )
+
+                        return result
+
+    print(
+        "[EXTRACT] MRP NOT found.",
+        flush=True
+    )
 
     return None
 
 
 # ============================================================
-# 7. NET QUANTITY
+# 9. NET QUANTITY
 # ============================================================
 
 def extract_net_quantity(lines):
 
+    print(
+        "\n[EXTRACT] Searching for Net Quantity...",
+        flush=True
+    )
+
     label_pattern = re.compile(
-        r"\bNET\s*"
+        r"\bNET\s+"
         r"(?:QTY|QUANTITY|WT|WEIGHT)\b",
         re.IGNORECASE
     )
 
     # --------------------------------------------------------
-    # First try around Net Quantity
+    # First: search around Net Quantity
     # --------------------------------------------------------
 
     for i, line in enumerate(lines):
@@ -512,38 +828,64 @@ def extract_net_quantity(lines):
 
                 if match:
 
-                    return match.group(0)
+                    result = match.group(0)
+
+                    print(
+                        f"[EXTRACT] Net Quantity found: "
+                        f"{result}",
+                        flush=True
+                    )
+
+                    return result
 
     # --------------------------------------------------------
-    # OCR may completely miss "Net Quantity"
+    # Fallback:
+    # Look for package quantities
     # --------------------------------------------------------
 
-    # Look for standalone package quantities.
     for line in reversed(lines):
 
         match = QUANTITY_PATTERN.search(line)
 
         if match:
 
-            return match.group(0)
+            result = match.group(0)
+
+            print(
+                f"[EXTRACT] Net Quantity fallback: "
+                f"{result}",
+                flush=True
+            )
+
+            return result
+
+    print(
+        "[EXTRACT] Net Quantity NOT found.",
+        flush=True
+    )
 
     return None
 
 
 # ============================================================
-# 8. MANUFACTURER
+# 10. MANUFACTURER
 # ============================================================
 
 def extract_manufacturer(lines):
 
+    print(
+        "\n[EXTRACT] Searching for Manufacturer...",
+        flush=True
+    )
+
     label_pattern = re.compile(
-        r"MANUFACTURED\s*BY"
+        r"MANUFACTURED\s+BY"
         r"|MANUFACTURER"
-        r"|PACKED\s*BY"
+        r"|PACKED\s+BY"
         r"|PACKER"
-        r"|IMPORTED\s*BY"
+        r"|IMPORTED\s+BY"
         r"|IMPORTER"
-        r"|MARKETED\s*BY"
+        r"|MARKETED\s+BY"
         r"|MARKETER",
         re.IGNORECASE
     )
@@ -580,9 +922,7 @@ def extract_manufacturer(lines):
         candidate = label_pattern.sub(
             "",
             line
-        ).strip(
-            " :-,"
-        )
+        ).strip(" :-,")
 
         if candidate:
 
@@ -591,38 +931,38 @@ def extract_manufacturer(lines):
                 for word in company_words
             ):
 
+                print(
+                    f"[EXTRACT] Manufacturer found: "
+                    f"{candidate}",
+                    flush=True
+                )
+
                 return candidate
 
         # ----------------------------------------------------
         # Following lines
         # ----------------------------------------------------
 
-        for candidate in lines[
-            i + 1:i + 7
-        ]:
+        for candidate in lines[i + 1:i + 7]:
 
-            candidate = clean_line(
-                candidate
-            )
+            candidate = clean_line(candidate)
 
             if not candidate:
                 continue
 
-            if label_pattern.search(
-                candidate
-            ):
+            if label_pattern.search(candidate):
                 continue
 
             if re.search(
-                r"\b"
-                r"(INGREDIENTS|"
+                r"\b("
+                r"INGREDIENTS|"
                 r"NUTRITION|"
                 r"NUTRITIONAL|"
                 r"NET\s+QUANTITY|"
                 r"MRP|"
                 r"BATCH|"
-                r"USE\s*BY)"
-                r"\b",
+                r"USE\s+BY"
+                r")\b",
                 candidate,
                 re.IGNORECASE
             ):
@@ -647,20 +987,34 @@ def extract_manufacturer(lines):
                     candidate,
                     maxsplit=1,
                     flags=re.IGNORECASE
-                )[0].strip(
-                    " ,"
+                )[0].strip(" ,")
+
+                print(
+                    f"[EXTRACT] Manufacturer found: "
+                    f"{candidate}",
+                    flush=True
                 )
 
                 return candidate
+
+    print(
+        "[EXTRACT] Manufacturer NOT found.",
+        flush=True
+    )
 
     return None
 
 
 # ============================================================
-# 9. CONSUMER CARE
+# 11. CONSUMER CARE
 # ============================================================
 
 def extract_consumer_care(lines):
+
+    print(
+        "\n[EXTRACT] Searching for Consumer Care...",
+        flush=True
+    )
 
     phone = None
     email = None
@@ -688,9 +1042,7 @@ def extract_consumer_care(lines):
             ]
         ):
 
-            priority_lines.append(
-                line
-            )
+            priority_lines.append(line)
 
     search_lines = (
         priority_lines
@@ -708,9 +1060,7 @@ def extract_consumer_care(lines):
 
     for line in search_lines:
 
-        match = PHONE_PATTERN.search(
-            line
-        )
+        match = PHONE_PATTERN.search(line)
 
         if match:
 
@@ -719,7 +1069,8 @@ def extract_consumer_care(lines):
             break
 
     # --------------------------------------------------------
-    # OCR fallback: O -> 0
+    # OCR fallback:
+    # O -> 0
     # --------------------------------------------------------
 
     if phone is None:
@@ -739,7 +1090,7 @@ def extract_consumer_care(lines):
             )
 
             for i in range(
-                len(digits) - 9
+                max(0, len(digits) - 9)
             ):
 
                 candidate = digits[
@@ -775,50 +1126,90 @@ def extract_consumer_care(lines):
 
             break
 
+    # --------------------------------------------------------
+    # Return result
+    # --------------------------------------------------------
+
     if phone and email:
 
-        return (
+        result = (
             f"Phone: {phone}; "
             f"Email: {email}"
         )
 
+        print(
+            f"[EXTRACT] Consumer Care found: "
+            f"{result}",
+            flush=True
+        )
+
+        return result
+
     if phone:
 
-        return (
-            f"Phone: {phone}"
+        result = f"Phone: {phone}"
+
+        print(
+            f"[EXTRACT] Consumer Care found: "
+            f"{result}",
+            flush=True
         )
+
+        return result
 
     if email:
 
-        return (
-            f"Email: {email}"
+        result = f"Email: {email}"
+
+        print(
+            f"[EXTRACT] Consumer Care found: "
+            f"{result}",
+            flush=True
         )
+
+        return result
+
+    print(
+        "[EXTRACT] Consumer Care NOT found.",
+        flush=True
+    )
 
     return None
 
 
 # ============================================================
-# 10. MANUFACTURING DATE
+# 12. MANUFACTURING DATE
 # ============================================================
 
 def extract_manufacturing_date(lines):
 
+    print(
+        "\n[EXTRACT] Searching for Manufacturing Date...",
+        flush=True
+    )
+
     label_pattern = re.compile(
-        r"\b(?:MFD|MFG|"
+        r"\b(?:"
+        r"MFD|"
+        r"MFG|"
         r"MANUFACTURED|"
         r"MANUFACTURING|"
+        r"DATE\s+OF\s+MANUFACTURE|"
+        r"DATE\s+OF\s+MANUFACTURING|"
+        r"DATE\s+OF\s+PACKING|"
         r"PACKED|"
-        r"PACKING|"
-        r"DATE\s+OF\s+MANUFACTURE)\b",
+        r"PACKING"
+        r")\b",
         re.IGNORECASE
     )
 
-    # First: look around the label
+    # --------------------------------------------------------
+    # Search near manufacturing label
+    # --------------------------------------------------------
+
     for i, line in enumerate(lines):
 
-        if label_pattern.search(
-            line
-        ):
+        if label_pattern.search(line):
 
             nearby = (
                 lines[i:i + 7]
@@ -834,7 +1225,49 @@ def extract_manufacturing_date(lines):
 
                 if match:
 
-                    return match.group(0)
+                    result = match.group(0)
+
+                    print(
+                        f"[EXTRACT] Manufacturing Date "
+                        f"found: {result}",
+                        flush=True
+                    )
+
+                    return result
+
+    # --------------------------------------------------------
+    # Specifically handle:
+    #
+    # Date of Manufacturing
+    # 08/2026
+    # --------------------------------------------------------
+
+    for i, line in enumerate(lines):
+
+        if re.search(
+            r"DATE\s+OF\s+"
+            r"(?:MANUFACTURING|MANUFACTURE|PACKING)",
+            line,
+            re.IGNORECASE
+        ):
+
+            for candidate in lines[i:i + 5]:
+
+                match = DATE_PATTERN.search(
+                    candidate
+                )
+
+                if match:
+
+                    result = match.group(0)
+
+                    print(
+                        f"[EXTRACT] Manufacturing Date "
+                        f"found: {result}",
+                        flush=True
+                    )
+
+                    return result
 
     # --------------------------------------------------------
     # Fallback
@@ -844,26 +1277,40 @@ def extract_manufacturing_date(lines):
 
     for line in lines:
 
-        matches = DATE_PATTERN.findall(
-            line
-        )
+        matches = DATE_PATTERN.findall(line)
 
-        dates.extend(
-            matches
-        )
+        dates.extend(matches)
 
     if dates:
 
-        return dates[0]
+        result = dates[0]
+
+        print(
+            f"[EXTRACT] Manufacturing Date "
+            f"fallback: {result}",
+            flush=True
+        )
+
+        return result
+
+    print(
+        "[EXTRACT] Manufacturing Date NOT found.",
+        flush=True
+    )
 
     return None
 
 
 # ============================================================
-# 11. BATCH NUMBER
+# 13. BATCH NUMBER
 # ============================================================
 
 def extract_batch_no(lines):
+
+    print(
+        "\n[EXTRACT] Searching for Batch Number...",
+        flush=True
+    )
 
     for i, line in enumerate(lines):
 
@@ -873,9 +1320,13 @@ def extract_batch_no(lines):
             re.IGNORECASE
         ):
 
+            # ------------------------------------------------
+            # Same line
+            # ------------------------------------------------
+
             match = re.search(
                 r"\bBATCH"
-                r"(?:\s*NO\.?)?"
+                r"(?:\s+NO\.?)?"
                 r"\s*[:\-]?\s*"
                 r"([A-Z0-9][A-Z0-9./_-]{2,})",
                 line,
@@ -884,11 +1335,21 @@ def extract_batch_no(lines):
 
             if match:
 
-                return match.group(1)
+                result = match.group(1)
 
-            for candidate in lines[
-                i + 1:i + 3
-            ]:
+                print(
+                    f"[EXTRACT] Batch Number found: "
+                    f"{result}",
+                    flush=True
+                )
+
+                return result
+
+            # ------------------------------------------------
+            # Following lines
+            # ------------------------------------------------
+
+            for candidate in lines[i + 1:i + 3]:
 
                 candidate = candidate.strip()
 
@@ -898,34 +1359,52 @@ def extract_batch_no(lines):
                     re.IGNORECASE
                 ):
 
+                    print(
+                        f"[EXTRACT] Batch Number found: "
+                        f"{candidate}",
+                        flush=True
+                    )
+
                     return candidate
+
+    print(
+        "[EXTRACT] Batch Number NOT found.",
+        flush=True
+    )
 
     return None
 
 
 # ============================================================
-# 12. USE BY / EXPIRY
+# 14. USE BY / EXPIRY
 # ============================================================
 
 def extract_use_by(lines):
 
+    print(
+        "\n[EXTRACT] Searching for Use By / Expiry...",
+        flush=True
+    )
+
     label_pattern = re.compile(
-        r"\b(?:USE\s*BY|"
-        r"BEST\s*BEFORE|"
+        r"\b(?:"
+        r"USE\s+BY|"
+        r"BEST\s+BEFORE|"
         r"EXPIRY|"
-        r"EXP)\b",
+        r"EXP"
+        r")\b",
         re.IGNORECASE
     )
 
+    # --------------------------------------------------------
+    # Search around label
+    # --------------------------------------------------------
+
     for i, line in enumerate(lines):
 
-        if label_pattern.search(
-            line
-        ):
+        if label_pattern.search(line):
 
-            nearby = lines[
-                i:i + 6
-            ]
+            nearby = lines[i:i + 6]
 
             for candidate in nearby:
 
@@ -935,27 +1414,50 @@ def extract_use_by(lines):
 
                 if match:
 
-                    return match.group(0)
+                    result = match.group(0)
+
+                    print(
+                        f"[EXTRACT] Use By / Expiry "
+                        f"found: {result}",
+                        flush=True
+                    )
+
+                    return result
+
+    # --------------------------------------------------------
+    # Fallback
+    # --------------------------------------------------------
 
     dates = []
 
     for line in lines:
 
         dates.extend(
-            DATE_PATTERN.findall(
-                line
-            )
+            DATE_PATTERN.findall(line)
         )
 
     if len(dates) >= 2:
 
-        return dates[-1]
+        result = dates[-1]
+
+        print(
+            f"[EXTRACT] Use By / Expiry "
+            f"fallback: {result}",
+            flush=True
+        )
+
+        return result
+
+    print(
+        "[EXTRACT] Use By / Expiry NOT found.",
+        flush=True
+    )
 
     return None
 
 
 # ============================================================
-# 13. API
+# 15. API - SCAN PRODUCT
 # ============================================================
 
 @app.post("/api/scan")
@@ -964,12 +1466,16 @@ def scan_product(
     front_image: UploadFile = File(...),
 
     back_image: UploadFile = File(...)
-
 ):
 
-    # --------------------------------------------------------
-    # Save front image
-    # --------------------------------------------------------
+    print("\n")
+    print("=" * 70)
+    print("[SCAN] NEW PRODUCT SCAN STARTED")
+    print("=" * 70)
+
+    # ========================================================
+    # SAVE FRONT IMAGE
+    # ========================================================
 
     front_filename = (
         "front_"
@@ -994,9 +1500,15 @@ def scan_product(
             buffer
         )
 
-    # --------------------------------------------------------
-    # Save back image
-    # --------------------------------------------------------
+    print(
+        f"[SCAN] Front image saved: "
+        f"{front_image_path}",
+        flush=True
+    )
+
+    # ========================================================
+    # SAVE BACK IMAGE
+    # ========================================================
 
     back_filename = (
         "back_"
@@ -1021,66 +1533,131 @@ def scan_product(
             buffer
         )
 
-    # --------------------------------------------------------
-    # OCR BOTH images
-    # --------------------------------------------------------
+    print(
+        f"[SCAN] Back image saved: "
+        f"{back_image_path}",
+        flush=True
+    )
+
+    # ========================================================
+    # OCR FRONT IMAGE
+    # ========================================================
+
+    print(
+        "\n[SCAN] Processing FRONT image...",
+        flush=True
+    )
 
     front_lines, front_ocr_details = run_ocr(
         front_image_path
+    )
+
+    # ========================================================
+    # OCR BACK IMAGE
+    # ========================================================
+
+    print(
+        "\n[SCAN] Processing BACK image...",
+        flush=True
     )
 
     back_lines, back_ocr_details = run_ocr(
         back_image_path
     )
 
-    # IMPORTANT:
-    # Do not extract only from back_lines.
+    # ========================================================
+    # COMBINE OCR
+    # ========================================================
+
     all_lines = (
         front_lines
         +
         back_lines
     )
 
-    # --------------------------------------------------------
-    # Print OCR for debugging
-    # --------------------------------------------------------
+    # Normalize
+    all_lines = normalize_lines(
+        all_lines
+    )
 
     print(
-        "\n================ FRONT OCR ================\n"
+        "\n[SCAN] Total OCR lines available: "
+        f"{len(all_lines)}",
+        flush=True
+    )
+
+    # ========================================================
+    # PRINT FRONT OCR
+    # ========================================================
+
+    print(
+        "\n================ FRONT OCR ================"
     )
 
     for item in front_ocr_details:
 
         print(
             f"{item['text']} "
-            f"(confidence: {item['confidence']:.2%})"
+            f"(confidence: "
+            f"{item['confidence']:.2%})"
         )
 
+    # ========================================================
+    # PRINT BACK OCR
+    # ========================================================
+
     print(
-        "\n================ BACK OCR ================\n"
+        "\n================ BACK OCR ================"
     )
 
     for item in back_ocr_details:
 
         print(
             f"{item['text']} "
-            f"(confidence: {item['confidence']:.2%})"
+            f"(confidence: "
+            f"{item['confidence']:.2%})"
+        )
+
+    # ========================================================
+    # EXTRACT DECLARATIONS
+    # ========================================================
+
+    print(
+        "\n"
+        + "=" * 70
+    )
+
+    print(
+        "[EXTRACT] STARTING DECLARATION EXTRACTION"
+    )
+
+    print(
+        "=" * 70
+    )
+
+    # --------------------------------------------------------
+    # Product Name
+    # Prefer front image first
+    # --------------------------------------------------------
+
+    product_name = extract_product_name(
+        front_lines
+    )
+
+    if not product_name:
+
+        product_name = extract_product_name(
+            all_lines
         )
 
     # --------------------------------------------------------
-    # EXTRACT
+    # All other declarations
     # --------------------------------------------------------
 
     declarations = {
 
         "product_name":
-            extract_product_name(
-                front_lines
-            )
-            or
-            extract_product_name(
-                all_lines
-            ),
+            product_name,
 
         "manufacturer":
             extract_manufacturer(
@@ -1118,12 +1695,21 @@ def scan_product(
             )
     }
 
-    # --------------------------------------------------------
-    # FINAL OUTPUT
-    # --------------------------------------------------------
+    # ========================================================
+    # FINAL DECLARATIONS
+    # ========================================================
 
     print(
-        "\n================ FINAL DECLARATIONS ================\n"
+        "\n"
+        + "=" * 70
+    )
+
+    print(
+        "================ FINAL DECLARATIONS ================"
+    )
+
+    print(
+        "=" * 70
     )
 
     print(
@@ -1134,9 +1720,9 @@ def scan_product(
         )
     )
 
-    # --------------------------------------------------------
+    # ========================================================
     # OCR CONFIDENCE SUMMARY
-    # --------------------------------------------------------
+    # ========================================================
 
     all_ocr_details = (
         front_ocr_details
@@ -1176,11 +1762,21 @@ def scan_product(
         "total_ocr_lines":
             len(all_ocr_details),
 
-        "lines": all_ocr_details
+        "lines":
+            all_ocr_details
     }
 
     print(
-        "\n================ OCR CONFIDENCE SUMMARY ================\n"
+        "\n"
+        + "=" * 70
+    )
+
+    print(
+        "================ OCR CONFIDENCE SUMMARY ================"
+    )
+
+    print(
+        "=" * 70
     )
 
     print(
@@ -1191,9 +1787,22 @@ def scan_product(
         )
     )
 
-    # --------------------------------------------------------
+    # ========================================================
     # COMPLIANCE
-    # --------------------------------------------------------
+    # ========================================================
+
+    print(
+        "\n"
+        + "=" * 70
+    )
+
+    print(
+        "[COMPLIANCE] Checking product compliance..."
+    )
+
+    print(
+        "=" * 70
+    )
 
     try:
 
@@ -1201,7 +1810,18 @@ def scan_product(
             declarations
         )
 
+        print(
+            "[COMPLIANCE] Compliance check completed.",
+            flush=True
+        )
+
     except Exception as e:
+
+        print(
+            "[COMPLIANCE] ERROR:",
+            str(e),
+            flush=True
+        )
 
         compliance_result = {
 
@@ -1215,9 +1835,22 @@ def scan_product(
                 str(e)
         }
 
-    # --------------------------------------------------------
-    # API RESPONSE
-    # --------------------------------------------------------
+    # ========================================================
+    # FINAL API RESPONSE
+    # ========================================================
+
+    print(
+        "\n"
+        + "=" * 70
+    )
+
+    print(
+        "[SCAN] SCAN COMPLETED"
+    )
+
+    print(
+        "=" * 70
+    )
 
     return {
 
@@ -1236,7 +1869,7 @@ def scan_product(
 
 
 # ============================================================
-# 14. ROOT
+# 16. ROOT
 # ============================================================
 
 @app.get("/")
@@ -1245,5 +1878,5 @@ def root():
     return {
 
         "message":
-            "Welcome to the PackSure OCR Extraction API!"
+            "Welcome to the NiyamNetra OCR Extraction API!"
     }

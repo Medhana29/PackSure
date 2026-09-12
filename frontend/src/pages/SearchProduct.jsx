@@ -1,96 +1,144 @@
-import { useState } from "react";
+import React from "react";
+import { useMemo, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import Navbar from "../components/Navbar";
-import ProductCard from "../components/ProductCard";
+import StatusBadge from "../components/StatusBadge";
 
-function SearchProduct() {
+export default function SearchProduct() {
+  const navigate = useNavigate();
+  const [query, setQuery] = useState("");
 
-  const [search, setSearch] = useState("");
+  const userEmail = localStorage.getItem("userEmail");
+  const historyKey = `scanHistory_${userEmail}`;
 
-  const products = [
-    {
-      id: 1,
-      name: "Tata Salt",
-      manufacturer: "Tata Consumer Products",
-      mrp: 30,
-      quantity: "1 kg"
-    },
-    {
-      id: 2,
-      name: "Aashirvaad Atta",
-      manufacturer: "ITC Limited",
-      mrp: 280,
-      quantity: "5 kg"
-    },
-    {
-      id: 3,
-      name: "Parle-G",
-      manufacturer: "Parle Products",
-      mrp: 10,
-      quantity: "100 g"
-    }
-  ];
+  const history = JSON.parse(
+    localStorage.getItem(historyKey) || "[]"
+  );
 
-  const filteredProducts = products.filter((product) =>
-    product.name.toLowerCase().includes(search.toLowerCase())
+  const products = useMemo(() => {
+    const map = new Map();
+
+    history.forEach((item) => {
+      const name =
+        item.productName ||
+        item.declarations?.product_name ||
+        "Unknown Product";
+
+      const key = name.toLowerCase();
+
+      if (!map.has(key)) {
+        map.set(key, {
+          name,
+          manufacturer:
+            item.declarations?.manufacturer ||
+            "Not detected",
+
+          mrp:
+            item.declarations?.mrp ||
+            "Not detected",
+
+          quantity:
+            item.declarations?.net_quantity ||
+            "Not detected",
+
+          status:
+            item.compliance_check?.overall_status ||
+            item.status,
+
+          inspectionId: item.inspectionId,
+
+          original: item,
+        });
+      }
+    });
+
+    return [...map.values()];
+  }, [history]);
+
+  const filtered = products.filter(
+    (p) =>
+      p.name
+        .toLowerCase()
+        .includes(query.toLowerCase()) ||
+      p.manufacturer
+        .toLowerCase()
+        .includes(query.toLowerCase())
   );
 
   return (
-    <div>
-
+    <>
       <Navbar />
 
-      <main className="page-container">
+      <main className="page">
+
+        <p className="eyebrow">
+          YOUR REAL SCANS
+        </p>
 
         <h1>Search Products</h1>
 
-        <p>
-          Search products that have already been inspected.
+        <p className="muted">
+          Search only products that exist in your inspection history.
         </p>
 
-        <div className="search-container">
+        <input
+          className="search-input"
+          placeholder="Search product or manufacturer..."
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+        />
 
-          <input
-            type="text"
-            placeholder="Search product name..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-          />
+        {filtered.length === 0 ? (
 
-          <button className="primary-btn">
-            Search
-          </button>
+          <div className="empty-state">
+            <h2>No matching products</h2>
+            <p>
+              Scan a product first or change your search.
+            </p>
+          </div>
 
-        </div>
+        ) : (
 
-        <div className="products-grid">
+          <div className="product-list">
 
-          {filteredProducts.length > 0 ? (
+            {filtered.map((product) => (
 
-            filteredProducts.map((product) => (
-              <ProductCard
-                key={product.id}
-                product={product}
-              />
-            ))
+              <button
+                className="product-card"
+                key={product.inspectionId}
+                onClick={() => {
+                  localStorage.setItem(
+                    "scanResult",
+                    JSON.stringify(product.original)
+                  );
 
-          ) : (
+                  navigate("/results");
+                }}
+              >
 
-            <div className="empty-state">
-              <h3>No products found</h3>
+                <div>
+                  <h3>{product.name}</h3>
 
-              <p>
-                Try searching with another product name.
-              </p>
-            </div>
+                  <p>{product.manufacturer}</p>
 
-          )}
+                  <small>
+                    {product.quantity} · {product.mrp}
+                  </small>
+                </div>
 
-        </div>
+                <StatusBadge
+                  status={product.status}
+                />
+
+              </button>
+
+            ))}
+
+          </div>
+
+        )}
 
       </main>
-
-    </div>
+    </>
   );
 }
-
-export default SearchProduct;

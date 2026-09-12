@@ -1,73 +1,179 @@
+import React from "react";
 import { useNavigate } from "react-router-dom";
+import Navbar from "../components/Navbar";
+import StatusBadge from "../components/StatusBadge";
+import RiskBadge from "../components/RiskBadge";
 
-import HistoryCard from "../components/HistoryCard";
-
-const historyData = [
-  {
-    productName: "ABC Biscuits",
-    inspectionId: "INS-001",
-    date: "06 September 2026",
-    status: "Potentially Non-Compliant",
-    risk: "Medium",
-    confidence: 92
-  },
-  {
-    productName: "XYZ Shampoo",
-    inspectionId: "INS-002",
-    date: "05 September 2026",
-    status: "Compliant",
-    risk: "Low",
-    confidence: 96
-  },
-  {
-    productName: "Fresh Juice",
-    inspectionId: "INS-003",
-    date: "03 September 2026",
-    status: "Non-Compliant",
-    risk: "High",
-    confidence: 88
-  }
-];
-
-function History() {
+export default function History() {
   const navigate = useNavigate();
 
+  const userEmail = localStorage.getItem("userEmail");
+  const historyKey = `scanHistory_${userEmail}`;
+
+  const history = [
+    ...JSON.parse(localStorage.getItem(historyKey) || "[]"),
+  ].reverse();
+
+  function open(item) {
+    localStorage.setItem(
+      "scanResult",
+      JSON.stringify(item)
+    );
+
+    navigate("/results");
+  }
+
+  function deleteScan(e, inspectionId) {
+    // Stop the card from opening the result
+    e.stopPropagation();
+
+    const confirmed = window.confirm(
+      "Are you sure you want to delete this inspection?"
+    );
+
+    if (!confirmed) {
+      return;
+    }
+
+    const currentHistory = JSON.parse(
+      localStorage.getItem(historyKey) || "[]"
+    );
+
+    const updatedHistory = currentHistory.filter(
+      (item) => item.inspectionId !== inspectionId
+    );
+
+    localStorage.setItem(
+      historyKey,
+      JSON.stringify(updatedHistory)
+    );
+
+    // If the deleted scan is currently open as the result,
+    // remove it from current result too.
+    const currentResult = JSON.parse(
+      localStorage.getItem("scanResult") || "null"
+    );
+
+    if (currentResult?.inspectionId === inspectionId) {
+      localStorage.removeItem("scanResult");
+    }
+
+    // Refresh the page so the deleted item disappears immediately
+    window.location.reload();
+  }
+
   return (
-    <div className="page">
+    <>
+      <Navbar />
 
-      <div className="page-header">
+      <main className="page">
 
-        <div>
-          <h1>Inspection History</h1>
+        <div className="hero-row">
 
-          <p>
-            View your previous product inspections.
-          </p>
+          <div>
+            <p className="eyebrow">
+              REAL SCAN HISTORY
+            </p>
+
+            <h1>
+              Inspection History
+            </h1>
+
+            <p className="muted">
+              These entries come from scans you actually performed.
+            </p>
+          </div>
+
+          <button
+            className="primary-btn"
+            onClick={() => navigate("/inspection")}
+          >
+            + New Inspection
+          </button>
+
         </div>
 
-        <button
-          className="secondary-button"
-          onClick={() => navigate("/results")}
-        >
-          Latest Results
-        </button>
+        {history.length === 0 ? (
 
-      </div>
+          <div className="empty-state">
 
-      <div className="history-list">
+            <h2>
+              No inspections yet
+            </h2>
 
-        {historyData.map((inspection) => (
-          <HistoryCard
-            key={inspection.inspectionId}
-            inspection={inspection}
-            onView={() => navigate("/results")}
-          />
-        ))}
+            <p>
+              Run your first scan and it will appear here automatically.
+            </p>
 
-      </div>
+          </div>
 
-    </div>
+        ) : (
+
+          <div className="history-list">
+
+            {history.map((item) => (
+
+              <div
+                className="history-card"
+                key={item.inspectionId}
+              >
+
+                <button
+                  className="history-card-content"
+                  onClick={() => open(item)}
+                >
+
+                  <div>
+
+                    <p className="eyebrow">
+                      {item.inspectionId}
+                    </p>
+
+                    <h3>
+                      {item.productName}
+                    </h3>
+
+                    <small>
+                      {item.date}
+                    </small>
+
+                  </div>
+
+                  <div className="badge-row">
+
+                    <StatusBadge
+                      status={item.status}
+                    />
+
+                    <RiskBadge
+                      risk={item.risk}
+                    />
+
+                  </div>
+
+                </button>
+
+                <button
+                  className="delete-btn"
+                  onClick={(e) =>
+                    deleteScan(
+                      e,
+                      item.inspectionId
+                    )
+                  }
+                >
+                  🗑 Delete
+                </button>
+
+              </div>
+
+            ))}
+
+          </div>
+
+        )}
+
+      </main>
+    </>
   );
 }
-
-export default History;

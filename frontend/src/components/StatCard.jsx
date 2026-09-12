@@ -1,14 +1,10 @@
 import React from "react";
-
-const StatCard = ({ title, value }) => {
+export default function StatCard({ title, value, subtitle }) {
   return (
-    <div className="card shadow-sm h-100">
-      <div className="card-body">
-        <h6 className="text-muted">{title}</h6>
-        <h2>{value}</h2>
-      </div>
+    <div className="stat-card">
+      <p>{title}</p>
+      <strong>{value}</strong>
+      <small>{subtitle}</small>
     </div>
   );
-};
-
-export default StatCard;
+}

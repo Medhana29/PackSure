@@ -1,86 +1,66 @@
+import React from "react";
 import { useState } from "react";
-import { useNavigate, Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
+import { authApi } from "../api";
+import Logo from "../components/Logo";
 
-function Register() {
+export default function Register() {
   const navigate = useNavigate();
+  const [form, setForm] = useState({ name: "", email: "", password: "" });
+  const [error, setError] = useState("");
+  const [success, setSuccess] = useState("");
+  const [loading, setLoading] = useState(false);
 
-  const [name, setName] = useState("");
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
+  function update(key, value) {
+    setForm((old) => ({ ...old, [key]: value }));
+  }
 
-  function handleRegister(e) {
+  async function handleSubmit(e) {
     e.preventDefault();
+    setError("");
+    setSuccess("");
+    setLoading(true);
 
-    if (!name || !email || !password) {
-      alert("Please fill all fields");
-      return;
+    try {
+      await authApi.post("/api/auth/register", form);
+      setSuccess("Registration successful. You can now log in.");
+      setTimeout(() => navigate("/login?role=consumer"), 700);
+    } catch (err) {
+      setError(err.response?.data?.detail || "Registration failed");
+    } finally {
+      setLoading(false);
     }
-
-    alert("Registration successful!");
-
-    navigate("/login");
   }
 
   return (
     <div className="auth-page">
+      <div className="auth-box">
+        <Logo />
+        <p className="tagline">SCAN. CHECK. COMPLY.</p>
+        <h1>Create Consumer Account</h1>
 
-      <div className="auth-card">
-
-        <h1>PackSure</h1>
-
-        <p className="auth-subtitle">
-          Create your account
-        </p>
-
-        <form onSubmit={handleRegister}>
-
-          <label>Full Name</label>
-
-          <input
-            type="text"
-            placeholder="Enter your name"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-          />
+        <form onSubmit={handleSubmit}>
+          <label>Full name</label>
+          <input value={form.name} onChange={(e) => update("name", e.target.value)} required />
 
           <label>Email</label>
-
-          <input
-            type="email"
-            placeholder="Enter your email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-          />
+          <input type="email" value={form.email} onChange={(e) => update("email", e.target.value)} required />
 
           <label>Password</label>
+          <input type="password" minLength="6" value={form.password} onChange={(e) => update("password", e.target.value)} required />
 
-          <input
-            type="password"
-            placeholder="Create a password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-          />
+          {error && <div className="error-box">{error}</div>}
+          {success && <div className="success-box">{success}</div>}
 
-          <button
-            type="submit"
-            className="primary-btn full-width"
-          >
-            Register
+          <button className="primary-btn full" disabled={loading}>
+            {loading ? "Creating..." : "Create Account"}
           </button>
-
         </form>
 
-        <p className="auth-footer">
-          Already have an account?{" "}
-          <Link to="/login">
-            Login
-          </Link>
+        <p className="auth-link">
+          Already registered? <Link to="/login?role=consumer">Login</Link>
         </p>
-
       </div>
-
     </div>
   );
 }
-
-export default Register;

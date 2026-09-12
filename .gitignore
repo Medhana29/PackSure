@@ -1,4 +1,11 @@
-__pycache__/
 venv/
+.venv/
+__pycache__/
 *.pyc
-*.pdf
+node_modules/
+dist/
+.env
+.env.*
+uploads/
+.vscode/
+.pytest_cache/

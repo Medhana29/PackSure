@@ -1,58 +1,31 @@
 import React from "react";
+import { useNavigate } from "react-router-dom";
+import Navbar from "../../components/Navbar";
 import StatCard from "../../components/StatCard";
-import "../../manufacturer.css";
 
-const ManufacturerDashboard = () => {
-  const stats = [
-    { title: "Total Products", value: 128 },
-    { title: "Compliant", value: 96 },
-    { title: "Issues Found", value: 24 },
-    { title: "Pending Review", value: 8 },
-  ];
+export default function ManufacturerDashboard() {
+  const navigate = useNavigate();
 
   return (
-  <div className="manufacturer-page">
+    <>
+      <Navbar />
+      <main className="page">
+        <p className="eyebrow">PRODUCT OWNER</p>
+        <h1>Manufacturer Dashboard</h1>
+        <p className="muted">Demo dashboard for product-owner presentation flow.</p>
 
-    <div className="dashboard-header">
-      <div>
-        <h1>Product Owner Dashboard</h1>
-        <p>Monitor your product compliance status</p>
-      </div>
-    </div>
-
-    <div className="manufacturer-stats">
-      {stats.map((stat, index) => (
-        <StatCard
-          key={index}
-          title={stat.title}
-          value={stat.value}
-        />
-      ))}
-    </div>
-
-    <div className="dashboard-section">
-      <h2>Compliance Overview</h2>
-
-      <div className="overview-card">
-        <div>
-          <h3>96</h3>
-          <p>Products are currently compliant</p>
+        <div className="stats-grid">
+          <StatCard title="Products" value="Demo" subtitle="Connect product database later" />
+          <StatCard title="Compliance" value="Review" subtitle="Use inspection evidence" />
+          <StatCard title="Alerts" value="0" subtitle="No live alerts connected" />
         </div>
 
-        <div>
-          <h3>24</h3>
-          <p>Products have issues</p>
-        </div>
-
-        <div>
-          <h3>8</h3>
-          <p>Products awaiting review</p>
-        </div>
-      </div>
-    </div>
-
-  </div>
-);
-};
-
-export default ManufacturerDashboard;
+        <section className="panel">
+          <h2>Product owner workspace</h2>
+          <p>This account uses the five-account presentation dataset requested for the prototype.</p>
+          <button className="primary-btn" onClick={() => navigate("/")}>Back to roles</button>
+        </section>
+      </main>
+    </>
+  );
+}
