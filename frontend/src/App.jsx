@@ -1,62 +1,37 @@
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import React from "react";
+import { Navigate, Route, Routes } from "react-router-dom";
 
+import RoleSelection from "./pages/RoleSelection";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
 import Dashboard from "./pages/Dashboard";
-import SearchProduct from "./pages/SearchProduct";
 import NewInspection from "./pages/NewInspection";
-import ImageQuality from "./pages/ImageQuality";
-import Scanning from "./pages/Scanning";
-import RequestReview from "./pages/RequestReview";
-
-
 import Results from "./pages/Results";
 import Report from "./pages/Report";
 import History from "./pages/History";
-
+import SearchProduct from "./pages/SearchProduct";
 import ManufacturerDashboard from "./pages/manufacturer/ManufacturerDashboard";
 import GovernmentDashboard from "./pages/government/GovernmentDashboard";
-import ReviewInspection from "./pages/government/ReviewInspection";
-import RoleSelection from "./pages/RoleSelection";
+
 function App() {
   return (
-    <BrowserRouter>
-      <Routes>
+    <Routes>
+      <Route path="/" element={<RoleSelection />} />
+      <Route path="/login" element={<Login />} />
+      <Route path="/register" element={<Register />} />
 
-        {/* Authentication */}
-        <Route path="/" element={<RoleSelection />} />
-        <Route path="/login" element={<Login />} />
-        <Route path="/register" element={<Register />} />
+      <Route path="/dashboard" element={<Dashboard />} />
+      <Route path="/inspection" element={<NewInspection />} />
+      <Route path="/results" element={<Results />} />
+      <Route path="/report" element={<Report />} />
+      <Route path="/history" element={<History />} />
+      <Route path="/search" element={<SearchProduct />} />
 
-        {/* Consumer Flow */}
-        <Route path="/dashboard" element={<Dashboard />} />
-        <Route path="/search" element={<SearchProduct />} />
-        <Route path="/inspection" element={<NewInspection />} />
-        <Route path="/quality" element={<ImageQuality />} />
-        <Route path="/scanning" element={<Scanning />} />
-        <Route path="/review" element={<RequestReview />} />
+      <Route path="/manufacturer" element={<ManufacturerDashboard />} />
+      <Route path="/government" element={<GovernmentDashboard />} />
 
-        {/* Results Flow */}
-        <Route path="/results" element={<Results />} />
-        <Route path="/report" element={<Report />} />
-        <Route path="/history" element={<History />} />
-        {/* Manufacturer Flow */}
-        <Route
-            path="/manufacturer"
-            element={<ManufacturerDashboard />}
-        />
-        {/* Government Authority Flow */}
-          <Route
-             path="/government"
-             element={<GovernmentDashboard />}
-          />
-
-          <Route
-            path="/government/review/:inspectionId"
-            element={<ReviewInspection />}
-          />
-      </Routes>
-    </BrowserRouter>
+      <Route path="*" element={<Navigate to="/" replace />} />
+    </Routes>
   );
 }
 

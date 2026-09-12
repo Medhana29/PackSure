@@ -1,96 +1,104 @@
+import React from "react";
 import { useState } from "react";
-import { useNavigate, Link, useSearchParams } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
+import { authApi } from "../api";
+import demoUsers from "../authUsers";
+import { saveSession } from "../auth";
+import Logo from "../components/Logo";
 
-function Login() {
+export default function Login() {
   const navigate = useNavigate();
-  const [searchParams] = useSearchParams();
-
-  const role = searchParams.get("role") || "consumer";
+  const location = useLocation();
+  const params = new URLSearchParams(location.search);
+  const selectedRole = params.get("role") || "consumer";
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
 
-  function handleLogin(e) {
+  async function handleSubmit(e) {
     e.preventDefault();
+    setError("");
+    setLoading(true);
 
-    // Mock login for prototype
-    if (email && password) {
-      localStorage.setItem("isLoggedIn", "true");
-      localStorage.setItem("userRole", role);
+    try {
+      if (selectedRole !== "consumer") {
+        const demo = demoUsers.find(
+          (u) =>
+            u.role === selectedRole &&
+            u.email.toLowerCase() === email.trim().toLowerCase() &&
+            u.password === password
+        );
 
-      if (role === "product-owner") {
-        navigate("/manufacturer");
-      } else if (role === "government") {
-        navigate("/government");
-      } else {
-        navigate("/dashboard");
+        if (!demo) {
+          throw new Error("Invalid demo credentials for this role.");
+        }
+
+        saveSession({ user: demo });
+
+        navigate(
+          selectedRole === "government" ? "/government" : "/manufacturer"
+        );
+        return;
       }
-    } else {
-      alert("Please enter email and password");
+
+      const response = await authApi.post("/api/auth/login", {
+        email,
+        password,
+      });
+
+      saveSession({
+        token: response.data.token,
+        user: response.data.user,
+      });
+
+      navigate("/dashboard");
+    } catch (err) {
+      setError(
+        err.response?.data?.detail ||
+        err.message ||
+        "Login failed"
+      );
+    } finally {
+      setLoading(false);
     }
   }
 
-  const roleNames = {
-    consumer: "Consumer",
-    "product-owner": "Product Owner",
-    government: "Government Authority",
-  };
-
   return (
     <div className="auth-page">
-      <div className="auth-card">
+      <div className="auth-box">
+        <Logo />
+        <p className="tagline">SCAN. CHECK. COMPLY.</p>
 
-        <h1>PackSure</h1>
+        <h1>{selectedRole === "consumer" ? "Consumer Login" :
+          selectedRole === "government" ? "Government Authority Login" :
+          "Product Owner Login"}</h1>
 
-        <p className="auth-subtitle">
-          Product Compliance Checker
-        </p>
-
-        <h2>Welcome Back</h2>
-
-        <p>
-          Login as <strong>{roleNames[role]}</strong>
-        </p>
-
-        <form onSubmit={handleLogin}>
-
+        <form onSubmit={handleSubmit}>
           <label>Email</label>
-
-          <input
-            type="email"
-            placeholder="Enter your email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-          />
+          <input value={email} onChange={(e) => setEmail(e.target.value)} type="email" required />
 
           <label>Password</label>
+          <input value={password} onChange={(e) => setPassword(e.target.value)} type="password" required />
 
-          <input
-            type="password"
-            placeholder="Enter your password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-          />
+          {error && <div className="error-box">{error}</div>}
 
-          <button
-            type="submit"
-            className="primary-btn full-width"
-          >
-            Login
+          <button className="primary-btn full" disabled={loading}>
+            {loading ? "Signing in..." : "Login"}
           </button>
-
         </form>
 
-        <p className="auth-footer">
-          Don't have an account?{" "}
-          <Link to="/register">
-            Register
-          </Link>
-        </p>
+        {selectedRole === "consumer" && (
+          <p className="auth-link">
+            New consumer? <Link to="/register">Create an account</Link>
+          </p>
+        )}
 
+        <button className="back-link" onClick={() => navigate("/")}>
+          ← Change role
+        </button>
       </div>
     </div>
   );
 }
-
-export default Login;

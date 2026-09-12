@@ -1,28 +1,32 @@
-import { Link } from "react-router-dom";
+import React from "react";
+import { useNavigate } from "react-router-dom";
+import Logo from "./Logo";
+import { logout } from "../auth";
 
-function Navbar() {
+export default function Navbar() {
+  const navigate = useNavigate();
+  const name = localStorage.getItem("userName") || "User";
+  const role = localStorage.getItem("userRole") || "consumer";
+
+  function handleLogout() {
+    logout();
+    navigate("/");
+  }
+
   return (
-    <nav className="navbar">
-
-      <div className="navbar-logo">
-        <Link to="/dashboard">
-          PackSure
-        </Link>
+    <>
+      <div className="top-notification">
+        <span>●</span> NiyamNetra helps identify missing packaged-commodity declarations.
       </div>
 
-      <div className="navbar-links">
-        <Link to="/dashboard">Dashboard</Link>
-        <Link to="/search">Search</Link>
-        <Link to="/inspection">New Scan</Link>
-        <Link to="/history">History</Link>
-      </div>
-
-      <Link to="/login" className="logout-btn">
-        Logout
-      </Link>
-
-    </nav>
+      <nav className="navbar">
+        <Logo />
+        <div className="nav-right">
+          <span className="nav-user">{name}</span>
+          <span className="role-pill">{role}</span>
+          <button className="ghost-btn" onClick={handleLogout}>Logout</button>
+        </div>
+      </nav>
+    </>
   );
 }
-
-export default Navbar;

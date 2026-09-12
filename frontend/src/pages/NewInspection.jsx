@@ -1,136 +1,248 @@
+import React from "react";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-
 import Navbar from "../components/Navbar";
-import ImageUploadCard from "../components/ImageUploadCard";
+import { scanApi } from "../api";
 
-function NewInspection() {
-
+export default function NewInspection() {
   const navigate = useNavigate();
 
-  const [frontImage, setFrontImage] = useState(null);
-  const [backImage, setBackImage] = useState(null);
-  const [sideImage, setSideImage] = useState(null);
+  const [productName, setProductName] = useState("");
+  const [front, setFront] = useState(null);
+  const [back, setBack] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
 
-  function handleImageChange(event, setter) {
+  async function submit(e) {
+    e.preventDefault();
+    setError("");
 
-    const file = event.target.files[0];
-
-    if (!file) return;
-
-    const imageUrl = URL.createObjectURL(file);
-
-    setter({
-      file: file,
-      preview: imageUrl
-    });
-  }
-
-  function continueToQuality() {
-
-    if (!frontImage || !backImage) {
-
-      alert(
-        "Front and Back images are required."
-      );
-
+    if (!productName.trim()) {
+      setError("Please enter the product name.");
       return;
     }
 
-    // Store temporarily for next screen
-    sessionStorage.setItem(
-      "frontImage",
-      frontImage.preview
-    );
-
-    sessionStorage.setItem(
-      "backImage",
-      backImage.preview
-    );
-
-    if (sideImage) {
-      sessionStorage.setItem(
-        "sideImage",
-        sideImage.preview
-      );
+    if (!front || !back) {
+      setError("Please upload both front and back images.");
+      return;
     }
 
-    navigate("/quality");
+    const formData = new FormData();
+
+    formData.append("front_image", front);
+    formData.append("back_image", back);
+
+    setLoading(true);
+
+    try {
+      const response = await scanApi.post("/api/scan", formData);
+
+      const data = response.data;
+
+      const inspectionId = `INS-${Date.now()}`;
+      // Send only non-compliant products to Government Authority
+if (
+  data.compliance_check?.overall_status === "VIOLATION"
+) {
+  try {
+    await fetch("http://localhost:8001/api/inspections", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        inspection_id: inspectionId,
+        consumer_email: localStorage.getItem("userEmail"),
+        product_name: productName.trim(),
+        declarations: data.declarations || {},
+        compliance_check: data.compliance_check || {},
+        ocr_confidence: data.ocr_confidence || {},
+      }),
+    });
+
+    console.log(
+      "Non-compliant inspection sent to Government Authority"
+    );
+  } catch (authorityError) {
+    console.error(
+      "Could not send inspection to Government:",
+      authorityError
+    );
+  }
+}
+
+      const record = {
+        ...data,
+
+        inspectionId,
+
+        productName: productName.trim(),
+
+        status:
+          data.compliance_check?.overall_status || "UNKNOWN",
+
+        risk:
+          data.compliance_check?.risk_level || "UNKNOWN",
+
+        date: new Date().toLocaleString(),
+      };
+
+      // Save history
+      const userEmail = localStorage.getItem("userEmail");
+      const historyKey = `scanHistory_${userEmail}`;
+
+      const history = JSON.parse(
+        localStorage.getItem(historyKey) || "[]"
+      );
+
+      localStorage.setItem(
+        historyKey,
+        JSON.stringify([...history, record])
+      );
+
+      // Save current result
+      localStorage.setItem(
+        "scanResult",
+        JSON.stringify(record)
+      );
+
+      navigate("/results");
+
+    } catch (err) {
+      console.error("SCAN ERROR:", err);
+
+      setError(
+        err.response?.data?.detail ||
+        err.message ||
+        "Could not scan the images. Make sure the OCR API is running on port 8000."
+      );
+
+    } finally {
+      setLoading(false);
+    }
   }
 
   return (
-    <div>
-
+    <>
       <Navbar />
 
-      <main className="page-container">
+      <main className="page narrow">
 
-        <div className="page-heading">
+        <button
+          className="back-link"
+          onClick={() => navigate("/dashboard")}
+        >
+          ← Dashboard
+        </button>
 
-          <h1>New Product Inspection</h1>
+        <h1>New Inspection</h1>
 
-          <p>
-            Upload clear images of all sides of the product package.
-          </p>
+        <p className="muted">
+          Enter the product name and upload clear images of both sides
+          of the package.
+        </p>
 
-        </div>
+        <form
+          className="inspection-form"
+          onSubmit={submit}
+        >
 
-        <div className="upload-grid">
+          {/* PRODUCT NAME */}
 
-          <ImageUploadCard
-            title="Front Image"
-            description="Upload the front side of the package."
-            required={true}
-            image={frontImage?.preview}
+          <label>Product Name</label>
+
+          <input
+            type="text"
+            placeholder="Enter product name"
+            value={productName}
+            onChange={(e) => setProductName(e.target.value)}
+            required
+          />
+
+          {productName && (
+            <p className="file-name">
+              ✓ Product: {productName}
+            </p>
+          )}
+
+
+          {/* FRONT IMAGE */}
+
+          <label>Front image</label>
+
+          <input
+            type="file"
+            accept="image/*"
             onChange={(e) =>
-              handleImageChange(e, setFrontImage)
+              setFront(e.target.files[0])
             }
           />
 
-          <ImageUploadCard
-            title="Back Image"
-            description="Upload the back side containing declarations."
-            required={true}
-            image={backImage?.preview}
+          {front && (
+            <div className="image-preview-box">
+              <img
+                src={URL.createObjectURL(front)}
+                alt="Front preview"
+                className="image-preview"
+              />
+
+              <p className="file-name">
+                ✓ {front.name}
+              </p>
+            </div>
+          )}
+
+
+          {/* BACK IMAGE */}
+
+          <label>Back image</label>
+
+          <input
+            type="file"
+            accept="image/*"
             onChange={(e) =>
-              handleImageChange(e, setBackImage)
+              setBack(e.target.files[0])
             }
           />
 
-          <ImageUploadCard
-            title="Side Image"
-            description="Optional: Upload a side view."
-            required={false}
-            image={sideImage?.preview}
-            onChange={(e) =>
-              handleImageChange(e, setSideImage)
-            }
-          />
+          {back && (
+            <div className="image-preview-box">
+              <img
+                src={URL.createObjectURL(back)}
+                alt="Back preview"
+                className="image-preview"
+              />
 
-        </div>
+              <p className="file-name">
+                ✓ {back.name}
+              </p>
+            </div>
+          )}
 
-        <div className="inspection-actions">
+
+          {/* ERROR */}
+
+          {error && (
+            <div className="error-box">
+              {error}
+            </div>
+          )}
+
+
+          {/* SCAN BUTTON */}
 
           <button
-            className="secondary-btn"
-            onClick={() => navigate("/dashboard")}
+            className="primary-btn full"
+            disabled={loading}
           >
-            Cancel
+            {loading
+              ? "Scanning + checking..."
+              : "Scan Product"}
           </button>
 
-          <button
-            className="primary-btn"
-            onClick={continueToQuality}
-          >
-            Continue →
-          </button>
-
-        </div>
+        </form>
 
       </main>
-
-    </div>
+    </>
   );
 }
-
-export default NewInspection;
