@@ -1,59 +1,38 @@
 import React from "react";
 import { useNavigate } from "react-router-dom";
-import "../roleSelection.css";
+import Logo from "../components/Logo";
 
-const RoleSelection = () => {
+export default function RoleSelection() {
   const navigate = useNavigate();
 
-  const roles = [
-    {
-      title: "Consumer",
-      description: "Scan and check packaged products",
-      role: "consumer",
-    },
-    {
-      title: "Product Owner",
-      description: "Manage products and compliance",
-      role: "product-owner",
-    },
-    {
-      title: "Government Authority",
-      description: "Review products and violations",
-      role: "government",
-    },
-  ];
-
-  const handleRoleSelect = (role) => {
-    navigate(`/login?role=${role}`);
-  };
-
   return (
-    <div className="role-page">
-      <div className="role-container">
-        <h1>Welcome to PackSure</h1>
+    <div className="auth-page">
+      <div className="role-shell">
+        <Logo />
+        <p className="tagline">SCAN. CHECK. COMPLY.</p>
+        <h1>Choose how you want to use NiyamNetra</h1>
+        <p className="muted">Select your role to continue.</p>
 
-        <p className="role-subtitle">
-          Select your role to continue
-        </p>
+        <div className="role-grid">
+          <button onClick={() => navigate("/login?role=consumer")} className="role-card">
+            <span>🛒</span>
+            <h2>Consumer</h2>
+            <p>Inspect packaged products and view your inspection history.</p>
+          </button>
 
-        <div className="role-cards">
-          {roles.map((role) => (
-            <div className="role-card" key={role.role}>
-              <h2>{role.title}</h2>
+          <button onClick={() => navigate("/login?role=product-owner")} className="role-card">
+            <span>🏭</span>
+            <h2>Product Owner</h2>
+            <p>View product compliance information for your products.</p>
+          </button>
 
-              <p>{role.description}</p>
-
-              <button
-                onClick={() => handleRoleSelect(role.role)}
-              >
-                Continue
-              </button>
-            </div>
-          ))}
+          <button onClick={() => navigate("/login?role=government")} className="role-card">
+            <span>⚖️</span>
+            <h2>Government Authority</h2>
+            <p>Review inspections and compliance findings.</p>
+          </button>
         </div>
       </div>
     </div>
   );
-};
-
-export default RoleSelection;
+}

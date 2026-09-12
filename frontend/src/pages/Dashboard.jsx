@@ -1,25 +1,41 @@
+import React from "react";
 import { useNavigate } from "react-router-dom";
 import Navbar from "../components/Navbar";
-import ScanCard from "../components/ScanCard";
+import StatCard from "../components/StatCard";
 
-function Dashboard() {
+export default function Dashboard() {
   const navigate = useNavigate();
 
-  return (
-    <div>
+  const userEmail = localStorage.getItem("userEmail");
+  const historyKey = `scanHistory_${userEmail}`;
 
+  const history = JSON.parse(
+    localStorage.getItem(historyKey) || "[]"
+  );
+
+  const compliant = history.filter(
+    (x) =>
+      x.compliance_check?.overall_status ===
+      "POTENTIALLY_COMPLIANT"
+  ).length;
+
+  return (
+    <>
       <Navbar />
 
-      <main className="page-container">
+      <main className="page">
 
-        <section className="dashboard-header">
-
+        <section className="hero-row">
           <div>
-            <h1>Consumer Dashboard</h1>
+            <p className="eyebrow">CONSUMER DASHBOARD</p>
 
-            <p>
-              Check whether packaged products follow
-              Legal Metrology requirements.
+            <h1>
+              Check packaged products with confidence.
+            </h1>
+
+            <p className="muted">
+              Scan the front and back of a package to extract
+              declarations and run the NiyamNetra compliance checks.
             </p>
           </div>
 
@@ -29,57 +45,72 @@ function Dashboard() {
           >
             + New Inspection
           </button>
-
         </section>
 
-        <ScanCard />
+        <div className="stats-grid">
+
+          <StatCard
+            title="Total inspections"
+            value={history.length}
+            subtitle="Actual scans saved"
+          />
+
+          <StatCard
+            title="Potentially compliant"
+            value={compliant}
+            subtitle="Based on current rules"
+          />
+
+          <StatCard
+            title="Searchable products"
+            value={
+              new Set(
+                history.map((x) => x.productName)
+              ).size
+            }
+            subtitle="From your scans"
+          />
+
+        </div>
 
         <section className="dashboard-grid">
 
-          <div
+          <button
+            className="dashboard-box"
+            onClick={() => navigate("/inspection")}
+          >
+            <span>📷</span>
+            <h3>New Inspection</h3>
+            <p>
+              Upload front and back package images.
+            </p>
+          </button>
+
+          <button
             className="dashboard-box"
             onClick={() => navigate("/search")}
           >
-            <span>🔍</span>
-
+            <span>🔎</span>
             <h3>Search Products</h3>
-
             <p>
-              Search previously inspected products.
+              Search products from your real scan history.
             </p>
-          </div>
+          </button>
 
-          <div
+          <button
             className="dashboard-box"
             onClick={() => navigate("/history")}
           >
             <span>📋</span>
-
             <h3>Inspection History</h3>
-
             <p>
-              View your previous inspections.
+              Open previous OCR and compliance results.
             </p>
-          </div>
-
-          <div className="dashboard-box">
-
-            <span>⚖️</span>
-
-            <h3>Legal Metrology</h3>
-
-            <p>
-              Verify mandatory declarations on packaged commodities.
-            </p>
-
-          </div>
+          </button>
 
         </section>
 
       </main>
-
-    </div>
+    </>
   );
 }
-
-export default Dashboard;
